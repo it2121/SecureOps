@@ -1,0 +1,92 @@
+﻿@page "/Emps"
+@using Microsoft.EntityFrameworkCore
+@using SecureOps.Data
+@using Bogus
+@using SecureOps.Models
+@inject AppDbContext DbContext
+
+<PageTitle>Employees</PageTitle>
+
+
+<h1>generate data</h1>
+
+<p role="status">Row count: @rowCount</p>
+
+<button class="btn btn-primary" @onclick="generate">Click me</button>
+
+@code {
+    private int rowCount = 0;
+
+    private async Task generate()
+    {
+        var allEmployees = await DbContext.Employees.ToListAsync();
+
+        // Remove all
+        DbContext.Employees.RemoveRange(allEmployees);
+
+        // Commit changes
+        await DbContext.SaveChangesAsync();
+        // Ensure database is created
+        await DbContext.Database.EnsureCreatedAsync();
+
+        // Seed only if empty
+        if (!await DbContext.Employees.AnyAsync())
+        {
+            var faker = new Faker<Employee>()
+                .RuleFor(e => e.FullName, f => f.Name.FullName())
+                .RuleFor(e => e.Email, f => f.Internet.Email())
+                .RuleFor(e => e.JobTitle, f => f.Name.JobTitle());
+
+            var fakeEmployees = faker.Generate(100); // generate 20 fake employees
+            DbContext.Employees.AddRange(fakeEmployees);
+            await DbContext.SaveChangesAsync();
+        }
+
+        // Update row count and refresh table
+        rowCount = await DbContext.Employees.CountAsync();
+        employees = await DbContext.Employees.ToListAsync();
+    }
+}
+
+<h1>Employees</h1>
+
+<p>This component demonstrates fetching data from a service.</p>
+
+@if (employees == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>FullName</th>
+                <th>Email</th>
+                <th>JobTitle</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var employee in employees)
+            {
+                <tr>
+                    <td>@employee.Id</td>
+                    <td>@employee.FullName</td>
+                    <td>@employee.Email</td>
+                    <td>@employee.JobTitle</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@code {
+    private List<Employee>? employees;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Fetch all employees from the database
+        employees = await DbContext.Employees.ToListAsync();
+    }
+}
