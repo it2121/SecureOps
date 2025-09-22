@@ -1,0 +1,83 @@
+﻿@page "/login"
+@using System.ComponentModel.DataAnnotations
+@using Microsoft.AspNetCore.Identity
+@using SecureOps.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager NavigationManager
+
+<h3>Login</h3>
+
+@if (!string.IsNullOrEmpty(ErrorMessage))
+{
+    <div class="text-danger">@ErrorMessage</div>
+}
+
+<EditForm Model="loginModel" OnValidSubmit="HandleLogin">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label>Email</label>
+        <InputText @bind-Value="loginModel.UserName" class="form-control" />
+        <ValidationMessage For="@(() => loginModel.UserName)" />
+    </div>
+
+    <div class="mb-3">
+        <label>Password</label>
+        <InputText @bind-Value="loginModel.Password" type="password" class="form-control" />
+        <ValidationMessage For="@(() => loginModel.Password)" />
+    </div>
+
+    <button type="submit" class="btn btn-primary">Login</button>
+</EditForm>
+
+@code {
+    private LoginModel loginModel = new();
+
+    private string ErrorMessage { get; set; }
+
+    private class LoginModel
+    {
+        [Required(ErrorMessage = "Email is required")]
+        [EmailAddress(ErrorMessage = "Invalid email format")]
+        public string UserName { get; set; }
+
+        [Required(ErrorMessage = "Password is required")]
+        public string Password { get; set; }
+    }
+
+    private async Task HandleLogin()
+    {
+        loginModel.UserName = "t@t.com";
+        loginModel.Password = "addasd!@#__123aAA";
+        // --- DEBUG: log inputs to console ---
+        Console.WriteLine($"DEBUG: UserName='{loginModel.UserName}', Password='{loginModel.Password}'");
+
+        if (string.IsNullOrWhiteSpace(loginModel.UserName) || string.IsNullOrWhiteSpace(loginModel.Password))
+        {
+            ErrorMessage = "Please enter both email and password.";
+            Console.WriteLine("DEBUG: Missing username or password.");
+            return;
+        }
+
+        // Attempt sign-in
+        var result = await SignInManager.PasswordSignInAsync(
+            loginModel.UserName, loginModel.Password, isPersistent: false, lockoutOnFailure: false);
+
+        if (result.Succeeded)
+        {
+            Console.WriteLine("DEBUG: Login successful.");
+            NavigationManager.NavigateTo("/"); // redirect
+        }
+        else if (result.IsLockedOut)
+        {
+            ErrorMessage = "Your account is locked. Try again later.";
+            Console.WriteLine("DEBUG: Account locked.");
+        }
+        else
+        {
+            ErrorMessage = "Invalid login credentials.";
+            Console.WriteLine("DEBUG: Invalid login.");
+        }
+    }
+}
