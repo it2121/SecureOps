@@ -1,4 +1,9 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
+﻿@using Microsoft.AspNetCore.Identity
+@using SecureOps.Data
+@inject SignInManager<ApplicationUser> SignInManager
+@inject NavigationManager Navigation
+
+<div class="top-row ps-3 navbar navbar-dark">
     <div class="container-fluid">
         <a class="navbar-brand" href="">SecureOps</a>
         <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
@@ -23,10 +28,24 @@
             <NavLink class="nav-link" href="fetchdata">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Fetch data
             </NavLink>
-        </div>    <div class="nav-item px-3">
+        </div>  
+        
+        
+        <div class="nav-item px-3">
             <NavLink class="nav-link" href="Emps">
                 <span class="oi oi-list-rich" aria-hidden="true"></span> Employees
             </NavLink>
+        </div>
+        
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="Login">
+                <span class="oi oi-list-rich" aria-hidden="true"></span> Employees
+            </NavLink>
+        </div>
+    
+        <div class="nav-item px-3">
+                <button class="btn btn-secondary" @onclick="Logout">Logout</button>
+            
         </div>
     </nav>
 </div>
@@ -39,5 +58,10 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+    private async Task Logout()
+    {
+        await SignInManager.SignOutAsync();
+        Navigation.NavigateTo("/login");
     }
 }
