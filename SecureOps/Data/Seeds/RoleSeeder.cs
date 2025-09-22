@@ -6,7 +6,7 @@ namespace SecureOps.Data.Seeds
     {
         public static async Task SeedRolesAsync(IServiceProvider serviceProvider)
         {
-            var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            /*var roleManager = serviceProvider.GetRequiredService<RoleManager<IdentityRole>>();
 
             string[] roles = { "SafetyAdmin", "SafetyManager", "SafetyOfficer", "FieldEmployee", "Supervisor" };
 
@@ -24,7 +24,7 @@ namespace SecureOps.Data.Seeds
             await userManager.CreateAsync(user, "addasd!@#__123aAA");
 
             // Assign multiple roles
-            await userManager.AddToRolesAsync(user, new[] { "SafetyManager", "Supervisor" });
+            await userManager.AddToRolesAsync(user, new[] { "SafetyManager", "Supervisor" });*/
         }
 
 

@@ -1,15 +1,5 @@
 ﻿@inherits LayoutComponentBase
-@using Microsoft.AspNetCore.Components.Authorization
 
-<AuthorizeView>
-    <Authorized>
-        Hello, @context.User.Identity.Name!
-        <a href="/logout">Logout</a>
-    </Authorized>
-    <NotAuthorized>
-        <a href="/login">Login</a>
-    </NotAuthorized>
-</AuthorizeView>
 <PageTitle>SecureOps</PageTitle>
 
 <div class="page">
@@ -18,7 +8,8 @@
     </div>
 
     <main>
-        <div class="top-row px-4">
+        <div class="top-row px-4 auth">
+            <LoginDisplay />
             <a href="https://docs.microsoft.com/aspnet/" target="_blank">About</a>
         </div>
 
