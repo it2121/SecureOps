@@ -1,6 +1,8 @@
 ﻿@page "/login"
 @inject HttpClient Http
 @inject NavigationManager NavManager
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
     <InputText @bind-Value="loginModel.Email" placeholder="Email" />
@@ -10,13 +12,22 @@
 
 @code {
     private LoginModel loginModel = new();
+
     private async Task HandleLogin()
     {
-        var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
+       // var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/auth/login", loginModel);
+
         if (response.IsSuccessStatusCode)
         {
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
-            // Save token in localStorage or a service
+
+            // Save token and fullName in localStorage
+            await LocalStorage.SetItemAsync("authToken", result.Token);
+            await LocalStorage.SetItemAsync("fullName", result.FullName);
+
+            AuthStateProvider.SetToken(result.Token);
+
             NavManager.NavigateTo("/");
         }
     }
@@ -30,5 +41,6 @@
     public class LoginResponse
     {
         public string Token { get; set; }
+        public string FullName { get; set; }
     }
 }

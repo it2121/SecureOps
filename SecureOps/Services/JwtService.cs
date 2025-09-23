@@ -8,7 +8,13 @@ public class JwtService
 {
     private readonly IConfiguration _config;
     public JwtService(IConfiguration config) => _config = config;
-
+    public ClaimsPrincipal GetClaimsFromToken(string token)
+    {
+        var handler = new JwtSecurityTokenHandler();
+        var jwt = handler.ReadJwtToken(token);
+        var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+        return new ClaimsPrincipal(identity);
+    }
     public string GenerateToken(User user)
     {
         var key = Encoding.ASCII.GetBytes(_config["JwtSettings:SecretKey"]);
