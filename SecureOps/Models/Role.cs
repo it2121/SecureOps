@@ -13,7 +13,7 @@ namespace SecureOps.Models
         public string RoleName { get; set; }
 
         // Many-to-many → navigation property
-        public ICollection<User> Users { get; set; }
+        public ICollection<User> Users { get; set; } = new List<User>();
 
     }
 }

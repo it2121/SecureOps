@@ -26,13 +26,15 @@ namespace SecureOps.Models
         public string PasswordHash { get; set; }  // store hashed password, not plain text!
 
         [MaxLength(50)]
-        public string Role { get; set; } = "User"; // e.g., Admin, User, Manager
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         public DateTime? LastLogin { get; set; }
 
-        public ICollection<Role> Roles { get; set; }
+
+
+        // Many-to-many → navigation property
+        public ICollection<Role> Roles { get; set; } = new List<Role>();
 
 
 

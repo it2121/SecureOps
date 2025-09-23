@@ -15,7 +15,6 @@
 
     private async Task HandleLogin()
     {
-       // var response = await Http.PostAsJsonAsync("api/auth/login", loginModel);
         var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/auth/login", loginModel);
 
         if (response.IsSuccessStatusCode)
@@ -24,11 +23,11 @@
 
             // Save token and fullName in localStorage
             await LocalStorage.SetItemAsync("authToken", result.Token);
-            await LocalStorage.SetItemAsync("fullName", result.FullName);
+           // await LocalStorage.SetItemAsync("fullName", result.FullName);
 
-            AuthStateProvider.SetToken(result.Token);
+            AuthStateProvider.SetTokenAsync(result.Token);
 
-            NavManager.NavigateTo("/");
+            NavManager.NavigateTo("/", forceLoad: true);
         }
     }
 

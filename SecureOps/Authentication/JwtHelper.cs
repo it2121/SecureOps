@@ -1,6 +1,7 @@
-﻿using System.IdentityModel.Tokens.Jwt;
+﻿using SecureOps.Models;
+using System.IdentityModel.Tokens.Jwt;
 using System.Linq;
-using SecureOps.Models;
+using System.Security.Claims;
 
 public static class JwtHelper
 {
@@ -17,7 +18,11 @@ public static class JwtHelper
                     ?? jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value,
             FullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value,
             Username = jwtToken.Claims.FirstOrDefault(c => c.Type == "Username")?.Value,
-            Role = jwtToken.Claims.FirstOrDefault(c => c.Type == "Role")?.Value
+
+            Roles = jwtToken.Claims
+                            .Where(c => c.Type == ClaimTypes.Role || c.Type == "role")
+                            .Select(c => new Role { RoleName = c.Value })
+                            .ToList()
         };
 
         return user;

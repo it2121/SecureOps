@@ -52,7 +52,7 @@ else
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
-
+   
         if (user.IsInRole("SafetyManager") || user.IsInRole("FieldEmployee"))
         {
             showSpecialFeatures = true;

@@ -1,0 +1,44 @@
+﻿@page "/Tester"
+@using System.Security.Claims
+@inject AuthenticationStateProvider AuthStateProvider
+
+<h3>User Info</h3>
+
+@if (claims != null)
+{
+    <ul>
+        @foreach (var claim in claims)
+        {
+            <li><b>@claim.Type:</b> @claim.Value</li>
+        }
+    </ul>
+
+    <h4>Roles</h4>
+    <ul>
+        @foreach (var role in roles)
+        {
+            <li>@role</li>
+        }
+    </ul>
+}
+else
+{
+    <p>No user is logged in.</p>
+}
+
+@code {
+    private IEnumerable<System.Security.Claims.Claim> claims;
+    private IEnumerable<string> roles;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+
+        if (user.Identity != null && user.Identity.IsAuthenticated)
+        {
+            claims = user.Claims;
+            roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value);
+        }
+    }
+}

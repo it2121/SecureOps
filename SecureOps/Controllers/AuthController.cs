@@ -37,35 +37,13 @@ public class AuthController : ControllerBase
         var user = _db.Users.FirstOrDefault(u => u.Email == request.Email);
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return Unauthorized();
+        var roles = user.Roles.Select(r => r.RoleName).ToList();
 
-        var token = _jwt.GenerateToken(user);
+        var token = _jwt.GenerateToken(user, roles);
 
-        return Ok(new { token, fullName = user.FullName }); // <-- return fullName
+        return Ok(new { token, fullName = user.FullName , roles }); // <-- return fullName
 
 
-        //  var cookieOptions = new CookieOptions
-        //  {
-        //      HttpOnly = false,
-        //      Secure = false,        // for localhost testing
-        //      SameSite = SameSiteMode.Lax,
-        //      Expires = DateTime.UtcNow.AddHours(10),
-        //      Path = "/"
-        //  };
-
-        //  // Store token
-        //  Response.Cookies.Append("authToken", token, cookieOptions);
-
-        //  // Store full name in a separate cookie (not HttpOnly, so JS/Blazor can read it)
-        ///*  Response.Cookies.Append("fullName", user.FullName, new CookieOptions
-        //  {
-        //      HttpOnly = false,
-        //      Secure = false,        // for localhost testing
-        //      SameSite = SameSiteMode.Lax,
-        //      Expires = DateTime.UtcNow.AddHours(10),
-        //      Path = "/"
-        //  });*/
-
-        //  return Ok(new { token, fullName = user.FullName });
     }
 }
     public class LoginRequest

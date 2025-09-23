@@ -18,7 +18,7 @@ public static class SeedData
                 FullName = "System Administrator",
                 Email = "admin@example.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Admin123!"),
-                Role = "Admin"
+                //Role = "Admin"
             },
             new User
             {
@@ -26,7 +26,7 @@ public static class SeedData
                 FullName = "John Doe",
                 Email = "john@example.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("John123!"),
-                Role = "User"
+               // Role = "User"
             },
             new User
             {
@@ -34,7 +34,7 @@ public static class SeedData
                 FullName = "Jane Smith",
                 Email = "jane@example.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword("Jane123!"),
-                Role = "Manager"
+               // Role = "Manager"
             }
         };
 

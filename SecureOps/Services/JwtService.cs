@@ -15,8 +15,19 @@ public class JwtService
         var identity = new ClaimsIdentity(jwt.Claims, "jwt");
         return new ClaimsPrincipal(identity);
     }
-    public string GenerateToken(User user)
+    public string GenerateToken(User user, List<string> roles)
     {
+        var claims = new List<Claim>
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
+        new Claim(ClaimTypes.Email, user.Email),
+        new Claim("fullName", user.FullName)
+    };
+
+        foreach (var role in roles)
+        {
+            claims.Add(new Claim(ClaimTypes.Role, role));
+        }
         var key = Encoding.ASCII.GetBytes(_config["JwtSettings:SecretKey"]);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
