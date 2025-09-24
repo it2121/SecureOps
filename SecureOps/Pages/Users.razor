@@ -1,0 +1,50 @@
+﻿@page "/users"
+@using SecureOps.Models.Dto
+@inject HttpClient Http
+@inject NavigationManager NavManager
+
+<h3 class="mb-3">All Users</h3>
+
+@if (userdto == null)
+{
+    <p>Loading users...</p>
+}
+else if (!userdto.Any())
+{
+    <p>No users found.</p>
+}
+else
+{
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <th>Email</th>
+                <th>Full Name</th>
+                <th>Username</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var user in userdto)
+            {
+                <tr>
+                    <td>@user.Email</td>
+                    <td>@user.FullName</td>
+                    <td>@user.Username</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+}
+
+@code {
+   // private List<User> user;
+    private List<UserDto> userdto;
+
+   
+    protected override async Task OnInitializedAsync()
+    {
+        userdto = await Http.GetFromJsonAsync<List<UserDto>>(NavManager.BaseUri + "api/users/GetAll");
+    }
+
+}
