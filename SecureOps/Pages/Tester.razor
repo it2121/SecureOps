@@ -39,6 +39,7 @@ else
         {
             claims = user.Claims;
             roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value);
+
         }
     }
 }

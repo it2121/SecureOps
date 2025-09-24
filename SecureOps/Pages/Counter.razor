@@ -2,7 +2,7 @@
 @inject AuthenticationStateProvider AuthStateProvider
 
 
-@attribute [Authorize(Roles = "SafetyManager,FieldEmployee")]
+@attribute [Authorize(Roles = "Support,FieldEmployee")]
 
 <PageTitle>Counter</PageTitle>
 
@@ -53,7 +53,7 @@ else
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
    
-        if (user.IsInRole("SafetyManager") || user.IsInRole("FieldEmployee"))
+        if (user.IsInRole("Support") || user.IsInRole("FieldEmployee"))
         {
             showSpecialFeatures = true;
         }

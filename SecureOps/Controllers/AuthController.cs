@@ -1,4 +1,5 @@
 ﻿using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
 
 [ApiController]
@@ -34,7 +35,12 @@ public class AuthController : ControllerBase
     [HttpPost("login")]
     public IActionResult Login([FromBody] LoginRequest request)
     {
-        var user = _db.Users.FirstOrDefault(u => u.Email == request.Email);
+        var user = _db.Users
+     .Include(u => u.Roles)  // <-- load roles
+     .FirstOrDefault(u => u.Email == request.Email);
+
+
+
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return Unauthorized();
         var roles = user.Roles.Select(r => r.RoleName).ToList();

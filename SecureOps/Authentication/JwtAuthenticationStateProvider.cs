@@ -2,9 +2,7 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using Blazored.LocalStorage;
-using System.IdentityModel.Tokens.Jwt;
-using System.Security.Claims;
-using Microsoft.AspNetCore.Components.Authorization;
+
 public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 {
     private string _token;
@@ -15,6 +13,7 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
     {
         _localStorage = localStorage;
     }
+
     public async Task SetTokenAsync(string token)
     {
         if (string.IsNullOrWhiteSpace(token))
@@ -25,9 +24,10 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
         {
             await _localStorage.SetItemAsync(TokenKey, token);
         }
-      //  _token = token;
+
         NotifyAuthenticationStateChanged(GetAuthenticationStateAsync());
     }
+
     public void SetToken(string token)
     {
         _token = token;
@@ -48,10 +48,22 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
         var handler = new JwtSecurityTokenHandler();
         var jwt = handler.ReadJwtToken(token);
 
-        var identity = new ClaimsIdentity(jwt.Claims, "jwt");
+        // Extract claims
+        var claims = jwt.Claims.ToList();
+
+        // Map role claims explicitly if needed
+        // Map role claims to ClaimTypes.Role
+        var roleClaims = claims
+            .Where(c => c.Type.Equals("role", StringComparison.OrdinalIgnoreCase))
+            .Select(c => new Claim(ClaimTypes.Role, c.Value));
+
+        var allClaims = claims
+            .Where(c => !c.Type.Equals("role", StringComparison.OrdinalIgnoreCase))
+            .Concat(roleClaims);
+
+        var identity = new ClaimsIdentity(allClaims, "jwt");
         var user = new ClaimsPrincipal(identity);
 
         return new AuthenticationState(user);
     }
-
 }
