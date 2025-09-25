@@ -9,6 +9,7 @@ using Microsoft.IdentityModel.Tokens;
 using SecureOps.Data;
 using SecureOps.Data.Seeds;
 using System.Text;
+using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -39,6 +40,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient();
 
 builder.Services.AddSingleton<WeatherForecastService>();
+builder.Services.AddMudServices();
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));

@@ -1,11 +1,16 @@
 ﻿@page "/"
 @using SecureOps.Models
+@using MudBlazor
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
 <p>Email: @currentUser?.Email</p>
 <p>Name: @currentUser?.FullName</p>
 
+
+
 @code {
+    private DateTime? _date = DateTime.Today;
+
     private User currentUser;
 
     protected override async Task OnAfterRenderAsync(bool firstRender)

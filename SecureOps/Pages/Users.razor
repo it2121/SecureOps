@@ -1,9 +1,13 @@
 ﻿@page "/users"
+@using MudBlazor
 @using SecureOps.Models.Dto
+@using MudBlazor.Utilities
+
 @inject HttpClient Http
 @inject NavigationManager NavManager
 
 <h3 class="mb-3">All Users</h3>
+<MudColorPicker Label="Basic Color Picker" @bind-Text="_colorValue" Style="@($"color: {_colorValue};")" Placeholder="Select Color" />
 
 @if (userdto == null)
 {
@@ -40,6 +44,7 @@ else
 @code {
    // private List<User> user;
     private List<UserDto> userdto;
+    private string _colorValue;
 
    
     protected override async Task OnInitializedAsync()

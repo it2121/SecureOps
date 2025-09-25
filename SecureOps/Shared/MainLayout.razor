@@ -1,7 +1,13 @@
-﻿@inherits LayoutComponentBase
+﻿@using MudBlazor
+@inherits LayoutComponentBase
 
 <PageTitle>SecureOps</PageTitle>
+<MudThemeProvider />
+<MudPopoverProvider />
 
+<MudDialogProvider />
+
+<MudSnackbarProvider />
 <div class="page">
     <div class="sidebar">
         <NavMenu />
@@ -18,3 +24,5 @@
         </article>
     </main>
 </div>
+
+
