@@ -7,7 +7,7 @@
 @inject NavigationManager NavManager
 
 <h3 class="mb-3">All Users</h3>
-<MudColorPicker Label="Basic Color Picker" @bind-Text="_colorValue" Style="@($"color: {_colorValue};")" Placeholder="Select Color" />
+
 
 @if (userdto == null)
 {
@@ -19,7 +19,9 @@ else if (!userdto.Any())
 }
 else
 {
-    <table class="table table-striped">
+    <MudTextField @bind-Value="_searchString" Placeholder="Search users..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
+
+    <MudSimpleTable Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:300px;" : "")">
         <thead>
             <tr>
                 <th>Email</th>
@@ -28,7 +30,7 @@ else
             </tr>
         </thead>
         <tbody>
-            @foreach (var user in userdto)
+            @foreach (var user in FilteredUsers)
             {
                 <tr>
                     <td>@user.Email</td>
@@ -37,19 +39,28 @@ else
                 </tr>
             }
         </tbody>
-    </table>
+    </MudSimpleTable>
+
 
 }
 
 @code {
+
+
    // private List<User> user;
     private List<UserDto> userdto;
     private string _colorValue;
-
+    private string _searchString = "";
    
     protected override async Task OnInitializedAsync()
     {
         userdto = await Http.GetFromJsonAsync<List<UserDto>>(NavManager.BaseUri + "api/users/GetAll");
     }
-
+    private IEnumerable<UserDto> FilteredUsers =>
+            string.IsNullOrWhiteSpace(_searchString)
+                ? userdto
+                : userdto.Where(u =>
+                    (u.Email?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.FullName?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.Username?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
 }

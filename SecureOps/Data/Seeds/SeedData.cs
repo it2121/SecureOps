@@ -6,8 +6,8 @@ public static class SeedData
 {
     public static void Initialize(AppDbContext context)
     {
-       /* if (context.Users.Any())
-            return; // DB has been seeded*/
+        if (context.Users.Any())
+            return; // DB has been seeded
 
         // 1. Seed roles
         var roles = new List<Role>
