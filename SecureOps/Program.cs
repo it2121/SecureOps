@@ -6,10 +6,11 @@ using Microsoft.AspNetCore.Components.Web;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
+using MudBlazor.Services;
 using SecureOps.Data;
 using SecureOps.Data.Seeds;
+using SecureOps.Services;
 using System.Text;
-using MudBlazor.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -72,6 +73,7 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddControllers();
 
+builder.Services.AddSingleton<MessageService>();
 
 
 var app = builder.Build();

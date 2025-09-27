@@ -2,8 +2,10 @@
 @using MudBlazor
 @using SecureOps.Models
 @using MudBlazor.Utilities
-
+@using SecureOps.Services
+@inject ISnackbar Snackbar
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject MessageService MessageService
 
 <p>Email: @currentUser?.Email</p>
 <p>Name: @currentUser?.FullName</p>
@@ -78,10 +80,31 @@
         </MudCardActions>
     </MudCard>
 </MudStack>
+@* <MudButton Color="Color.Info" @onclick="nackbar">Info snackbar</MudButton>
+<MudButton Color="Color.Success" @onclick="@(() => Snackbar.Add("The reactor is running at optimum temperature", Severity.Success))">Success snackbar</MudButton>
+<MudButton Color="Color.Error" @onclick="@(() => Snackbar.Add("Reactor meltdown is imminent", Severity.Error))">Error snackbar</MudButton>
 
-
+ *@
 @code {
-        bool ReadOnly = true;
+    private async Task nackbar()
+    {
+
+        if (currentUser == null)
+        {
+
+
+            Snackbar.Add("you are not looked in yet!", Severity.Info);
+        }
+        else
+        {
+            
+
+        }
+
+    }
+
+
+    bool ReadOnly = true;
     bool NestedReadOnly;
     bool Disabled = true;
     bool NestedDisabled;
@@ -93,15 +116,36 @@
     private DateTime? _date = DateTime.Today;
 
     private User currentUser;
-
+    protected override void OnInitialized()
+    {
+        if (!string.IsNullOrEmpty(MessageService.PendingMessage))
+        {
+            Snackbar.Add(MessageService.PendingMessage, MessageService.PendingSeverity);
+            MessageService.PendingMessage = null; // clear after showing
+        }
+    }
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
+
         if (firstRender)
         {
+
             var token = await LocalStorage.GetItemAsync<string>("authToken");
             currentUser = JwtHelper.DecodeTokenToUser(token);
 
             StateHasChanged();
+        }
+
+        if (currentUser == null)
+        {
+
+
+            Snackbar.Add("you are not looked in yet!", Severity.Info);
+        }
+        else
+        {
+
+
         }
     }
 }

@@ -1,8 +1,12 @@
 ﻿@page "/login"
+@using MudBlazor
+@using SecureOps.Services
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject JwtAuthenticationStateProvider AuthStateProvider
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject MessageService _messageService
 
 <EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
     <InputText @bind-Value="loginModel.Email" placeholder="Email" />
@@ -24,10 +28,12 @@
             // Save token and fullName in localStorage
             await LocalStorage.SetItemAsync("authToken", result.Token);
            // await LocalStorage.SetItemAsync("fullName", result.FullName);
+            //Snackbar.Add("you are not looged in yet!", Severity.Success);
+            _messageService.PendingMessage = "You are now logged in!";
+            _messageService.PendingSeverity = Severity.Success;
 
-            AuthStateProvider.SetTokenAsync(result.Token);
+           NavManager.NavigateTo("/", forceLoad: true);
 
-            NavManager.NavigateTo("/", forceLoad: true);
         }
     }
 
