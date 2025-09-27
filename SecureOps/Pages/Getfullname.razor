@@ -1,8 +1,15 @@
 ﻿@page "/Getfullname"
 @using Microsoft.AspNetCore.Identity
 @using SecureOps.Data
-@inject UserManager<ApplicationUser> UserManager
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Net.Http.Headers
+@using static System.Net.WebRequestMethods
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
+@inject UserManager<ApplicationUser> UserManager
+@inject NavigationManager NavManager
+@inject HttpClient Http
 <h3>Find User Full Name</h3>
 
 <InputText @bind-Value="email" placeholder="Enter email" class="form-control mb-2" />
@@ -24,16 +31,31 @@
 
     private async Task GetFullName()
     {
-        errorMessage = fullName = null;
+        fullName = errorMessage = null;
 
-        var user = await UserManager.FindByEmailAsync(email);
-        if (user != null)
+        try
         {
-            fullName = user.FullName;
+            // If using JWT, add Authorization header
+            var jwt = await LocalStorage.GetItemAsync<string>("authToken");
+            Http.DefaultRequestHeaders.Authorization =
+                new System.Net.Http.Headers.AuthenticationHeaderValue("Bearer", jwt);
+
+            var response = await Http.GetAsync(NavManager.BaseUri + $"api/Users/GetNameFromEmail?email={email}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var userDto = await response.Content.ReadFromJsonAsync<UserDto>();
+                fullName = userDto?.FullName;
+            }
+            else
+            {
+                errorMessage = await response.Content.ReadAsStringAsync();
+            }
         }
-        else
+        catch (Exception ex)
         {
-            errorMessage = "User not found.";
+            errorMessage = $"Error: {ex.Message}";
         }
+        
     }
 }

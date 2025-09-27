@@ -25,10 +25,7 @@
         {
             var result = await response.Content.ReadFromJsonAsync<LoginResponse>();
 
-            // Save token and fullName in localStorage
             await LocalStorage.SetItemAsync("authToken", result.Token);
-           // await LocalStorage.SetItemAsync("fullName", result.FullName);
-            //Snackbar.Add("you are not looged in yet!", Severity.Success);
             _messageService.PendingMessage = "You are now logged in!";
             _messageService.PendingSeverity = Severity.Success;
 
