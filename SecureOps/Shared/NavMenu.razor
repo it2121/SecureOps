@@ -29,11 +29,18 @@
         <MudNavLink Match="NavLinkMatch.All" Href="/users" Icon="@Icons.Material.Filled.Tablet">users</MudNavLink>
         <MudNavLink Match="NavLinkMatch.All" Href="/fetchdata" Icon="@Icons.Material.Filled.SafetyCheck">fetchdata</MudNavLink>
         <MudNavLink Match="NavLinkMatch.All" Href="/Emps" Icon="@Icons.Material.Filled.People">Emps</MudNavLink>
+
+        <AuthorizeView>
+    <NotAuthorized>
         <MudNavLink Match="NavLinkMatch.All" Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+
+            </NotAuthorized>
+        </AuthorizeView>
+
         <MudSpacer />
-
+        <AuthorizeView>
         <MudNavLink Match="NavLinkMatch.All" @onclick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudNavLink>
-
+        </AuthorizeView>
         </MudNavMenu>
     </MudDrawer>
 

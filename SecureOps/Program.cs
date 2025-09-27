@@ -78,10 +78,9 @@ builder.Services.AddSingleton<MessageService>();
 
 var app = builder.Build();
 
-app.MapControllers();
 
-app.UseAuthentication();
-app.UseAuthorization();
+
+
 
 
 using (var scope = app.Services.CreateScope())
@@ -103,8 +102,20 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+
 
 app.MapBlazorHub();
+
+
+
+
+
+
+
 app.MapFallbackToPage("/_Host");
 
 app.Run();

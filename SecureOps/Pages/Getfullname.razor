@@ -13,7 +13,12 @@
 <h3>Find User Full Name</h3>
 
 <InputText @bind-Value="email" placeholder="Enter email" class="form-control mb-2" />
+
+<AuthorizeView Roles="Admin">
+
+
 <button class="btn btn-primary mb-2" @onclick="GetFullName">Get Full Name</button>
+</AuthorizeView>
 
 @if (!string.IsNullOrEmpty(fullName))
 {

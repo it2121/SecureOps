@@ -8,13 +8,46 @@
 @inject ISnackbar Snackbar
 @inject MessageService _messageService
 
-<EditForm Model="@loginModel" OnValidSubmit="HandleLogin">
-    <InputText @bind-Value="loginModel.Email" placeholder="Email" />
-    <InputText @bind-Value="loginModel.Password" placeholder="Password" type="password" />
-    <button type="submit">Login</button>
-</EditForm>
+
+<MudItem xs="12">
+    <MudPaper Class="pa-6">
+        <MudForm Spacing="8">
+            <MudTextField @bind-Value="loginModel.Email" Label="Name" Variant="Variant.Outlined" InputType="InputType.Email"
+            AdornmentIcon="@Icons.Material.Filled.AttachMoney" AdornmentColor="Color.Warning" />
+
+            <MudTextField @bind-Value="loginModel.Password" Label="Password" Variant="Variant.Outlined"
+            InputType="@PasswordInput" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ButtonTestclick" AdornmentAriaLabel="Show Password" />
+
+        </MudForm>
+    </MudPaper>
+</MudItem>
+
+<MudPaper Class="pa-4 mt-4">
+    <MudButton Style=" height: 40px;" Variant="Variant.Filled" Color="Color.Warning" @onclick="HandleLogin" FullWidth="true">LogIn</MudButton>
+
+</MudPaper>
 
 @code {
+
+    bool isShow;
+    InputType PasswordInput = InputType.Password;
+    string PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+
+    void ButtonTestclick()
+    {
+        @if (isShow)
+        {
+            isShow = false;
+            PasswordInputIcon = Icons.Material.Filled.VisibilityOff;
+            PasswordInput = InputType.Password;
+        }
+        else
+        {
+            isShow = true;
+            PasswordInputIcon = Icons.Material.Filled.Visibility;
+            PasswordInput = InputType.Text;
+        }
+    }
     private LoginModel loginModel = new();
 
     private async Task HandleLogin()

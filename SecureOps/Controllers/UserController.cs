@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
@@ -40,7 +41,7 @@ namespace SecureOps.Controllers
 
             return Ok(users);
         }
-
+        [Authorize(Roles = "Admin")]
         [HttpGet("GetNameFromEmail")]
         public async Task<IActionResult> GetNameFromEmail([FromQuery] string email)
         {
