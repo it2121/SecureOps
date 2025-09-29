@@ -11,6 +11,10 @@
         <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
         <MudSpacer />
 
+
+
+
+
     </MudAppBar>
     <MudDrawer @bind-Open="@_open" ClipMode="@DrawerClipMode.Docked" Breakpoint="@Breakpoint.None" Elevation="1" Variant="@DrawerVariant.Mini">
     <MudNavMenu Color="Color.Success"  Class="d-flex flex-column h-100">
@@ -50,6 +54,10 @@
 
 @code {
 
+   
+
+    [CascadingParameter(Name = "DarkMode")]
+    public bool DarkMode { get; set; }
     bool _expanded = true;
     private bool _open = false;
     private bool _dense = false;

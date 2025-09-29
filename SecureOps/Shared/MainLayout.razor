@@ -5,20 +5,35 @@
 @* Required *@
 
 
-<MudThemeProvider IsDarkMode="true" />
+<MudThemeProvider IsDarkMode=DarkMode />
 <MudPopoverProvider />
 <MudSnackbarProvider />
 <MudLayout>
 <div class="page">
   
         <NavMenu />
-  
+
 
     <main>
        
         <MudMainContent Class="pt-16 px-16">
             <MudContainer Class="mt-6">
-            @Body
+
+                       
+
+
+                        @Body
+
+                    <MudToggleIconButton @bind-Toggled="DarkMode"
+                                         Icon="@Icons.Material.Filled.LightMode"
+                                         Color="@Color.Warning"
+                                         ToggledIcon="@Icons.Material.Filled.DarkMode"
+                                         ToggledColor="@Color.Default"
+                                         title="@(DarkMode ? "On" : "Off")"
+                                         Style=" position: fixed;
+    bottom: 10px;
+    right: 20px;
+    z-index: 1000;" />
             </MudContainer>
         </MudMainContent>
   
@@ -26,3 +41,6 @@
 </div>
 
 </MudLayout>
+@code {
+    public bool DarkMode { get; set; } = true;
+}
