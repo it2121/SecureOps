@@ -37,6 +37,8 @@ public class AuthController : ControllerBase
     {
         var user = _db.Users
      .Include(u => u.Roles)  // <-- load roles
+         .Include(u => u.Employee) // <-- important
+
      .FirstOrDefault(u => u.Email == request.Email);
 
 
@@ -44,8 +46,9 @@ public class AuthController : ControllerBase
         if (user == null || !BCrypt.Net.BCrypt.Verify(request.Password, user.PasswordHash))
             return Unauthorized();
         var roles = user.Roles.Select(r => r.RoleName).ToList();
+        var employee = user.Employee;
 
-        var token = _jwt.GenerateToken(user, roles);
+        var token = _jwt.GenerateToken(user, roles, employee);
 
         return Ok(new { token, fullName = user.FullName , roles }); // <-- return fullName
 

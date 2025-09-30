@@ -15,6 +15,11 @@ namespace SecureOps.Models
         [MaxLength(50)]
         public string? JobTitle { get; set; }
 
+        // One-to-one → navigation property
+        public User? User { get; set; }   // Each Employee has one User
+        public int? UserId { get; set; }  // optional foreign key
+
+
         // Relationship: One employee can have many tasks & incidents
         public ICollection<SafetyTask>? SafetyTasks { get; set; }
         public ICollection<Incident>? Incidents { get; set; }

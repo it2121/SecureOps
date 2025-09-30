@@ -1,7 +1,12 @@
 ﻿@page "/Tester"
 @using System.Security.Claims
+@using SecureOps.Models
+@using SecureOps.Models.Dto
 @inject AuthenticationStateProvider AuthStateProvider
-
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager NavManager
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject HttpClient Http
 <h3>User Info</h3>
 
 @if (claims != null)
@@ -20,6 +25,17 @@
             <li>@role</li>
         }
     </ul>
+    <h4>Employee</h4>
+    <ul>
+
+        <li>@employee.FullName</li>
+        <li>@employee.JobTitle</li>
+        <li>@employee.Email</li>
+        <li>@employee.UserId</li>
+        <li>@employee.Id</li>
+        <li>@employee.Username</li>
+        
+    </ul>
 }
 else
 {
@@ -29,11 +45,15 @@ else
 @code {
     private IEnumerable<System.Security.Claims.Claim> claims;
     private IEnumerable<string> roles;
-
+    EmployeeDto employee;
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        employee = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
+
 
         if (user.Identity != null && user.Identity.IsAuthenticated)
         {

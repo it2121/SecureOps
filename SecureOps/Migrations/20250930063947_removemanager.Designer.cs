@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using SecureOps.Data;
 
@@ -11,9 +12,11 @@ using SecureOps.Data;
 namespace SecureOps.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250930063947_removemanager")]
+    partial class removemanager
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -59,14 +62,7 @@ namespace SecureOps.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("nvarchar(50)");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
-
                     b.HasKey("Id");
-
-                    b.HasIndex("UserId")
-                        .IsUnique()
-                        .HasFilter("[UserId] IS NOT NULL");
 
                     b.ToTable("Employees");
                 });
@@ -267,15 +263,6 @@ namespace SecureOps.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("SecureOps.Models.Employee", b =>
-                {
-                    b.HasOne("SecureOps.Models.User", "User")
-                        .WithOne("Employee")
-                        .HasForeignKey("SecureOps.Models.Employee", "UserId");
-
-                    b.Navigation("User");
-                });
-
             modelBuilder.Entity("SecureOps.Models.EmployeeDocumentAcknowledgement", b =>
                 {
                     b.HasOne("SecureOps.Models.Employee", "Employee")
@@ -325,11 +312,6 @@ namespace SecureOps.Migrations
             modelBuilder.Entity("SecureOps.Models.SDocument", b =>
                 {
                     b.Navigation("Acknowledgements");
-                });
-
-            modelBuilder.Entity("SecureOps.Models.User", b =>
-                {
-                    b.Navigation("Employee");
                 });
 #pragma warning restore 612, 618
         }

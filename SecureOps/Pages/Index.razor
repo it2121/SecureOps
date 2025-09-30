@@ -9,6 +9,8 @@
 
 <p>Email: @currentUser?.Email</p>
 <p>Name: @currentUser?.FullName</p>
+<p>Emp FullName: @currentEmp?.FullName</p>
+<p>JobTitle: @currentEmp?.JobTitle</p>
 
 
 <MudColorPicker Class="pa-4 mud-info" Label="Grid" ColorPickerView="ColorPickerView.Grid" />
@@ -116,6 +118,7 @@
     private DateTime? _date = DateTime.Today;
 
     private User currentUser;
+    private Employee currentEmp;
     protected override void OnInitialized()
     {
         if (!string.IsNullOrEmpty(MessageService.PendingMessage))
@@ -132,6 +135,7 @@
 
             var token = await LocalStorage.GetItemAsync<string>("authToken");
             currentUser = JwtHelper.DecodeTokenToUser(token);
+            currentEmp = JwtHelper.DecodeTokenToEmployee(token);
 
             StateHasChanged();
         }

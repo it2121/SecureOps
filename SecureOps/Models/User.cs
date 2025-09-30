@@ -37,7 +37,8 @@ namespace SecureOps.Models
         public ICollection<Role> Roles { get; set; } = new List<Role>();
 
 
-
+        // One-to-one → Employee
+        public Employee? Employee { get; set; }
 
     }
 }

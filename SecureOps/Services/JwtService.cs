@@ -15,7 +15,7 @@ public class JwtService
         var identity = new ClaimsIdentity(jwt.Claims, "jwt");
         return new ClaimsPrincipal(identity);
     }
-    public string GenerateToken(User user, List<string> roles)
+    public string GenerateToken(User user, List<string> roles,Employee employee)
     { // Build all claims including roles
         var claims = new List<Claim>
     {
@@ -23,10 +23,19 @@ public class JwtService
         new Claim("Email", user.Email),
         new Claim("FullName", user.FullName),
         new Claim("Username", user.Username),
-        new Claim("PasswordHash", user.PasswordHash)
+        new Claim("PasswordHash", user.PasswordHash),
+        new Claim("employeeFullName", employee.FullName),
+        new Claim("employeeJobTitle", employee.JobTitle),
+        new Claim("employeeId", employee.Id.ToString()),
+        new Claim("employeeUserId", employee.UserId.ToString()),
+
+
+
+
     };
 
-        // Add all roles
+     
+        // Add all roless
         foreach (var role in roles)
         {
             claims.Add(new Claim(ClaimTypes.Role, role));

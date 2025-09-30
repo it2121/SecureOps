@@ -13,7 +13,6 @@ namespace SecureOps.Data
         public DbSet<Role> Roles { get; set; }
 
         public DbSet<Employee> Employees { get; set; } = null!;
-        public DbSet<Manager> Managers { get; set; } = null!;
         public DbSet<SafetyTask> SafetyTasks { get; set; } = null!;
         public DbSet<Incident> Incidents { get; set; } = null!;
         public DbSet<SDocument> SDocuments { get; set; } = null!;
@@ -29,7 +28,12 @@ namespace SecureOps.Data
                 .WithMany(r => r.Users)
                 .UsingEntity(j => j.ToTable("UserRoles")); // join table
 
-            
+
+            modelBuilder.Entity<Employee>()
+        .HasOne(e => e.User)
+        .WithOne(u => u.Employee)
+        .HasForeignKey<Employee>(e => e.UserId);
+
         }
     }
 }
