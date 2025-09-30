@@ -34,7 +34,6 @@ namespace SecureOps.Controllers
                 FullName = employee.FullName,
                 JobTitle = employee.JobTitle,
                 UserId = employee.User?.Id ?? 0,
-                Username = employee.User?.Username,
                 Email   = employee.Email,
                 
             };
@@ -48,6 +47,38 @@ namespace SecureOps.Controllers
 
             return Ok(employees);
         }
+
+
+        [HttpPost("RegisterEmployee")]
+        public async Task<IActionResult> RegisterEmployee([FromBody] EmployeeDto Emp)
+        {
+            try
+            {
+
+                var createdEmp = new Employee
+                {
+                    FullName = Emp.FullName,
+                    Email = Emp.Email,
+                    UserId = Emp.UserId,
+                    JobTitle = Emp.JobTitle,
+                };
+
+              
+               
+
+                _db.Employees.Add(createdEmp);
+                await _db.SaveChangesAsync();
+
+                return Ok(createdEmp);
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
     }
 
 }

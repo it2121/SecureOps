@@ -1,0 +1,65 @@
+﻿@page "/register"
+@using FormCraft
+@using FormCraft.ForMudBlazor
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@inject NavigationManager NavManager
+@inject HttpClient Http
+
+<h3>Register</h3>
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h4" Class="mb-4">Registration Form</MudText>
+
+        <FormCraftComponent TModel="RegisterDto"
+                            Model="@model"
+                            Configuration="@formConfig"
+                            OnValidSubmit="@HandleSubmit"
+                            ShowSubmitButton="true"
+                            SubmitButtonText="Register" />
+    </MudPaper>
+</MudContainer>
+
+
+
+@code {
+    private RegisterDto model = new();
+    private IFormConfiguration<RegisterDto> formConfig;
+
+    protected override void OnInitialized()
+    {
+        formConfig = FormBuilder<RegisterDto>
+            .Create()
+            .AddRequiredTextField(x => x.FullName, "FullName", minLength: 2)
+            .AddRequiredTextField(x => x.Username, "Username", minLength: 2)
+            .AddEmailField(x => x.Email)
+            .AddPasswordField(x => x.Password, "Password", minLength: 5)
+          
+            
+            .Build();
+    }
+
+    private async Task HandleSubmit(RegisterDto submittedModel)
+    {
+        // Handle form submission
+
+
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/users/RegisterUser", submittedModel);
+
+        if (response.IsSuccessStatusCode)
+        {
+            var createdUser = await response.Content.ReadFromJsonAsync<User>();
+            Console.WriteLine($"User registered: {createdUser.Username}");
+        }
+        else
+        {
+            var error = await response.Content.ReadAsStringAsync();
+            Console.WriteLine($"Error: {error}");
+
+
+
+        }
+    }
+}

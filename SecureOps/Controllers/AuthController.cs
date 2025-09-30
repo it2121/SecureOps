@@ -50,7 +50,7 @@ public class AuthController : ControllerBase
 
         var token = _jwt.GenerateToken(user, roles, employee);
 
-        return Ok(new { token, fullName = user.FullName , roles }); // <-- return fullName
+        return Ok(new { token }); // <-- return fullName
 
 
     }

@@ -27,14 +27,20 @@
     </ul>
     <h4>Employee</h4>
     <ul>
-
+        @if (empExist){
         <li>@employee.FullName</li>
         <li>@employee.JobTitle</li>
         <li>@employee.Email</li>
         <li>@employee.UserId</li>
         <li>@employee.Id</li>
-        <li>@employee.Username</li>
-        
+        }
+        else
+        {
+
+            <li>No EMp is set</li>
+
+
+        }
     </ul>
 }
 else
@@ -45,14 +51,27 @@ else
 @code {
     private IEnumerable<System.Security.Claims.Claim> claims;
     private IEnumerable<string> roles;
+    bool empExist = false;
     EmployeeDto employee;
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         var token = await LocalStorage.GetItemAsync<string>("authToken");
+        var employeeIdClaim = user.FindFirst("employeeId")?.Value;
+         empExist = int.TryParse(employeeIdClaim, out var empId);
 
-        employee = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
+
+        if (empExist)
+        {
+            employee = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
+        }
+        else
+        {
+            employee = null;
+        }
+
+
 
 
         if (user.Identity != null && user.Identity.IsAuthenticated)

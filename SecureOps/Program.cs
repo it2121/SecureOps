@@ -1,4 +1,6 @@
 using Blazored.LocalStorage;
+using FormCraft;
+using FormCraft.ForMudBlazor.Extensions;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Authorization;
@@ -42,7 +44,8 @@ builder.Services.AddHttpClient();
 
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddMudServices();
-
+builder.Services.AddFormCraft();
+builder.Services.AddFormCraftMudBlazor();
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 builder.Services.AddScoped<JwtService>();

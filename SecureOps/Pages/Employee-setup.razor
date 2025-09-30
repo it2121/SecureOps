@@ -1,0 +1,129 @@
+﻿@page "/employee-setup"
+
+@using FormCraft
+@using FormCraft.ForMudBlazor
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject NavigationManager NavManager
+@inject HttpClient Http
+
+<MudContainer MaxWidth="MaxWidth.Small">
+    <MudPaper Class="pa-4">
+        <MudText Typo="Typo.h4" Class="mb-4">Registration Form</MudText>
+
+        <FormCraftComponent TModel="EmployeeDto"
+                            Model="@model"
+                            Configuration="@formConfig"
+                            OnValidSubmit="@HandleSubmit"
+                            ShowSubmitButton="true"
+                            SubmitButtonText="Register" />
+    </MudPaper>
+</MudContainer>
+
+
+
+
+
+@code { 
+
+    private EmployeeDto model = new();
+    private IFormConfiguration<EmployeeDto> formConfig;
+    private User currentUser;
+    private MudForm? form;
+    private Employee employee = new Employee();
+
+
+
+    private async Task HandleSubmit(EmployeeDto submittedModel)
+    {
+        // Handle form submission
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        currentUser = JwtHelper.DecodeTokenToUser(token);
+        submittedModel.UserId = currentUser.Id; 
+        submittedModel.Email = currentUser.Email;
+
+
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/employee/RegisterEmployee", submittedModel);
+
+        try
+        {
+        if (response.IsSuccessStatusCode)
+        {
+            var createdUser = await response.Content.ReadFromJsonAsync<User>();
+            Console.WriteLine($"User registered: {createdUser.Username}");
+
+
+            Snackbar.Add("Employee information saved successfully!", Severity.Success);
+            NavManager.NavigateTo("/profile"); // redirect back to profile
+
+
+        }
+        else
+        {
+          
+            var error = await response.Content.ReadAsStringAsync();
+            Snackbar.Add($"Error: {error}", Severity.Error);
+
+
+        }
+        }
+          catch (Exception ex)
+                {
+                    Snackbar.Add($"Exception: {ex.Message}", Severity.Error);
+                }
+
+    }
+
+
+    protected override void OnInitialized()
+    {
+        formConfig = FormBuilder<EmployeeDto>
+            .Create()
+            .AddRequiredTextField(x => x.FullName, "FullName", minLength: 2)
+            .AddRequiredTextField(x => x.JobTitle, "JobTitle", minLength: 2)
+        
+          
+            
+            .Build();
+    }
+
+
+
+
+
+    // private async Task SubmitEmployeeInfo()
+    // {
+    //     if (form != null)
+    //     {
+    //         await form.Validate();
+
+    //         if (form.IsValid)
+    //         {
+    //             try
+    //             {
+    //                 var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/employee/setup", employee);
+
+    //                 if (response.IsSuccessStatusCode)
+    //                 {
+    //                     Snackbar.Add("Employee information saved successfully!", Severity.Success);
+    //                     NavManager.NavigateTo("/profile"); redirect back to profile
+    //                 }
+    //                 else
+    //                 {
+    //                     var error = await response.Content.ReadAsStringAsync();
+    //                     Snackbar.Add($"Error: {error}", Severity.Error);
+    //                 }
+    //             }
+    //             catch (Exception ex)
+    //             {
+    //                 Snackbar.Add($"Exception: {ex.Message}", Severity.Error);
+    //             }
+    //         }
+    //     }
+    // }
+}

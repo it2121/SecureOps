@@ -25,6 +25,7 @@ public static class JwtHelper
             Email = jwtToken.Claims.FirstOrDefault(c => c.Type == "Email")?.Value
                     ?? jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value,
             FullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "FullName")?.Value,
+            Id = Convert.ToInt32(jwtToken.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value),
             Username = jwtToken.Claims.FirstOrDefault(c => c.Type == "Username")?.Value,
 
             Roles = jwtToken.Claims

@@ -1,0 +1,113 @@
+﻿@page "/profile"
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+@inject NavigationManager NavManager
+@inject JwtAuthenticationStateProvider AuthStateProvider
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+
+
+<MudPaper Class="p-6 mx-auto mt-6" Elevation="4" MaxWidth="600px" Rounded="true">
+    <MudText Typo="Typo.h5" Class="mb-4">Employee Profile</MudText>
+
+    @if (isLoading)
+    {
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" Class="m-4" />
+        <MudText Typo="Typo.subtitle2">Loading profile...</MudText>
+    }
+    else if (!empExist)
+    {
+        <MudText Typo="Typo.body1" Color="Color.Error">
+            ⚠ You don’t have an employee profile yet.  
+            Please fill in your employee information first.
+        </MudText>
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" OnClick="GoToEmployeeSetup">
+            Fill Employee Info
+        </MudButton>
+    }
+    else
+    {
+        <MudGrid>
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Employee ID:</MudText>
+                <MudText Typo="Typo.body1">@employeeDto.Id</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Full Name:</MudText>
+                <MudText Typo="Typo.body1">@employeeDto.FullName</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Email:</MudText>
+                <MudText Typo="Typo.body1">@employeeDto.Email</MudText>
+            </MudItem>
+
+         
+        </MudGrid>
+
+        <MudDivider Class="my-4" />
+
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditProfile">
+            Edit Profile
+        </MudButton>
+    }
+</MudPaper>
+
+@code {
+    private Employee? employee;
+    private bool isLoading = true;
+    bool empExist = false;
+    EmployeeDto? employeeDto;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        try
+        {
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
+            var employeeIdClaim = user.FindFirst("employeeId")?.Value;
+            empExist = int.TryParse(employeeIdClaim, out var empId);
+            if (empExist)
+            {
+                employeeDto = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
+            
+            
+            }
+            else
+            {
+                empExist = false;
+                employee = null;
+        }
+
+
+
+
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private void EditProfile()
+    {
+        NavManager.NavigateTo("/edit-profile");
+    }
+
+    private void GoToEmployeeSetup()
+    {
+        NavManager.NavigateTo("/employee-setup");
+    }
+}

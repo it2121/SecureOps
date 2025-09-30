@@ -21,20 +21,32 @@ public class JwtService
     {
         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         new Claim("Email", user.Email),
+        new Claim("UserId", user.Id.ToString()),
         new Claim("FullName", user.FullName),
         new Claim("Username", user.Username),
         new Claim("PasswordHash", user.PasswordHash),
-        new Claim("employeeFullName", employee.FullName),
-        new Claim("employeeJobTitle", employee.JobTitle),
-        new Claim("employeeId", employee.Id.ToString()),
-        new Claim("employeeUserId", employee.UserId.ToString()),
-
+   
 
 
 
     };
 
-     
+        if (employee != null)
+        {
+            if (employee.Id != 0)
+                claims.Add(new Claim("employeeId", employee.Id.ToString()));
+
+            if (employee.UserId != 0)
+                claims.Add(new Claim("employeeUserId", employee.UserId.ToString()));
+            if (employee.UserId != 0)
+                claims.Add(new Claim("employeeJobTitle", employee.JobTitle.ToString()));
+            if (employee.UserId != 0)
+                claims.Add(new Claim("employeeFullName", employee.FullName.ToString()));
+
+
+        }
+
+
         // Add all roless
         foreach (var role in roles)
         {

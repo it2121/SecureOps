@@ -33,10 +33,12 @@
         <MudNavLink Match="NavLinkMatch.All" Href="/users" Icon="@Icons.Material.Filled.Tablet">users</MudNavLink>
         <MudNavLink Match="NavLinkMatch.All" Href="/fetchdata" Icon="@Icons.Material.Filled.SafetyCheck">fetchdata</MudNavLink>
         <MudNavLink Match="NavLinkMatch.All" Href="/Emps" Icon="@Icons.Material.Filled.People">Emps</MudNavLink>
+        <MudNavLink Match="NavLinkMatch.All" Href="/profile" Icon="@Icons.Material.Filled.Face">profile</MudNavLink>
 
         <AuthorizeView>
     <NotAuthorized>
         <MudNavLink Match="NavLinkMatch.All" Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All" Href="/register" Icon="@Icons.Material.Filled.Add">Register</MudNavLink>
 
             </NotAuthorized>
         </AuthorizeView>
