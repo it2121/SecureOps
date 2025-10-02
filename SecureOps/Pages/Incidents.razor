@@ -38,7 +38,7 @@
         {
             <MudTextField @bind-Value="_searchString" Placeholder="Search Incedent..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
 
-            <MudSimpleTable Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:300px;" : "")">
+            <MudSimpleTable Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:500px;" : "")">
                 <thead>
                     <tr>
                         <th>Title</th>
@@ -54,13 +54,21 @@
                             <td>@incident.Status</td>
                             <td>@incident.ReportedAt.ToString()</td>
                             <td>
-                                <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => EditIncident(incident.Id))">
+                                <MudButton Color="Color.Primary" FullWidth="true" Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => EditIncident(incident.Id))">
                                     Edit
                                 </MudButton>
 
-                                <MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
+                              @*   <MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
                                     Open simple dialog
-                                </MudButton>
+                                </MudButton> *@
+
+                            </td>
+                            <td>
+                            @*     <MudButton Color="Color.Error" FullWidth="true" Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => DeleteIncident(incident.Id))">
+                                    Delete
+                                </MudButton> *@
+
+                                <MudButton Variant="Variant.Filled" FullWidth="true"  Color="Color.Error" OnClick="@(() => OnButtonClickedAsync(incident.Id))">Delete</MudButton>
 
                             </td>
                         </tr>
@@ -76,22 +84,70 @@
 
 
 </MudPaper>
-@code {
 
+<MudMessageBox @ref="_mudMessageBox" Title="Warning" CancelText="Cancel">
+    <MessageContent>
+        Deleting can <b><i>not</i></b> be undone!
+    </MessageContent>
+    <YesButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">Delete!</MudButton>
+    </YesButton>
+</MudMessageBox>
+
+
+@code {
+    private MudMessageBox _mudMessageBox;
+    private bool _state =false;
+
+    private async Task OnButtonClickedAsync(int incidentId)
+    {
+        bool? result = await _mudMessageBox.ShowAsync();
+        _state = result is null ? false : true;
+
+        if (_state)
+        {
+            
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/incident/{incidentId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var incidentToRemove = incidents.FirstOrDefault(i => i.Id == incidentId);
+                if (incidentToRemove is not null)
+                    incidents.Remove(incidentToRemove);
+                StateHasChanged();
+            }
+
+        }
+
+        StateHasChanged();
+    }
+    private async Task DeleteIncident(int incidentId)
+    {
+        var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/incident/{incidentId}");
+
+        if (response.IsSuccessStatusCode)
+        {
+            var incidentToRemove = incidents.FirstOrDefault(i => i.Id == incidentId);
+            if (incidentToRemove is not null)
+                incidents.Remove(incidentToRemove);
+            StateHasChanged();
+        }
+        
+    }
 
     private void EditIncident(int incidentId)
     {
         // Navigate to the edit page for the selected incident
-        //NavManager.NavigateTo($"/incident-edit/{incidentId}");
-       // OpenDialogAsync();
+        NavManager.NavigateTo($"/incidentForm/{incidentId}");
+        // OpenDialogAsync();
 
-    
+
     }
     private Task OpenDialogAsync()
     {
         var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
 
-        return DialogService.ShowAsync<IncidentCreate>("incident", options);
+        return DialogService.ShowAsync<IncidentForm>("incident", options);
     }
 
 
@@ -104,7 +160,7 @@
     private List<Incident> incidents = new();
 
 
- 
+
     private IEnumerable<Incident> FilteredUsers =>
             string.IsNullOrWhiteSpace(_searchString)
                 ? incidents
@@ -128,14 +184,16 @@
 
         incidents = await Http.GetFromJsonAsync<List<Incident>>(NavManager.BaseUri + $"api/incident/GetIncidentsOfEmployee?EmpID={employee.Id}")
     ?? new List<Incident>();
-      
+
 
 
     }
 
+
+
     private void CreateNewIncident()
     {
         // Navigate to a page or open a dialog for creating a new incident
-        NavManager.NavigateTo($"/incidentCreate/");
+        NavManager.NavigateTo($"/incidentForm/");
     }
 }

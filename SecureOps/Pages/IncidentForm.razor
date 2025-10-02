@@ -1,4 +1,4 @@
-﻿@page "/incidentCreate/"
+﻿@page "/incidentForm/{IncidentId:int?}"
 @using MudBlazor
 @using SecureOps.Models
 @using SecureOps.Models.Dto
@@ -53,6 +53,8 @@
 </MudPaper>
 
 @code {
+    [Parameter] public int IncidentId { get; set; } = 0;
+
     [Parameter] public int EmployeeId { get; set; }
     private Employee employee;
     protected override async Task OnInitializedAsync()
@@ -61,7 +63,15 @@
         var token = await LocalStorage.GetItemAsync<string>("authToken");
         EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
 
+        if (IncidentId != 0)
+        {
+            // var response = await Http.GetAsync(NavManager.BaseUri + $"api/Users/GetNameFromEmail?email={email}");
 
+            Incident tempIncident = await Http.GetFromJsonAsync<Incident>(NavManager.BaseUri + $"api/incident/GetIncident?IncidentId={IncidentId}");
+
+            incident = tempIncident;
+
+        }
 
 
 
@@ -88,9 +98,10 @@
             Title = incident.Title,
             Status = incident.Status,
             EmpId = incident.EmployeeId,
-            PhotoPath = incident.PhotoPath
+            PhotoPath = incident.PhotoPath,
+            Id = incident.Id
         };
-        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/incident/RegisterIncident", dto);
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/incident/UpsertIncident", dto);
 
         if (response.IsSuccessStatusCode)
         {

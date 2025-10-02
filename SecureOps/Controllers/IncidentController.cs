@@ -24,7 +24,7 @@ namespace SecureOps.Controllers
         public async Task<Incident> GetIncident([FromQuery] int IncidentId)
         {
             Incident incident = await _db.Incidents
-        .Include(e => e.Employee)
+      
         .FirstOrDefaultAsync(e => e.Id == IncidentId);
 
             if (incident == null) return null;
@@ -98,5 +98,76 @@ namespace SecureOps.Controllers
             }
         }
 
+
+        [HttpPost("UpsertIncident")]
+        public async Task<IActionResult> UpsertIncident([FromBody] IncidentWithEmpDto dto)
+        {
+            try
+            {
+                // Check if incident exists (by Id in the DTO)
+                var existingIncident = await _db.Incidents.FindAsync(dto.Id);
+
+                if (existingIncident is not null)
+                {
+                    // Update existing
+                    existingIncident.Title = dto.Title;
+                    existingIncident.Description = dto.Description;
+                    existingIncident.PhotoPath = dto.PhotoPath;
+                    existingIncident.Status = dto.Status;
+                    existingIncident.ReportedAt = dto.ReportedAt;
+                    existingIncident.EmployeeId = dto.EmpId;
+
+                    _db.Incidents.Update(existingIncident);
+                    await _db.SaveChangesAsync();
+
+                    return Ok(existingIncident);
+                }
+                else
+                {
+                    // Create new
+                    var newIncident = new Incident
+                    {
+                        Title = dto.Title,
+                        Description = dto.Description,
+                        PhotoPath = dto.PhotoPath,
+                        Status = dto.Status,
+                        ReportedAt = dto.ReportedAt,
+                        EmployeeId = dto.EmpId
+                    };
+
+                    await _db.Incidents.AddAsync(newIncident);
+                    await _db.SaveChangesAsync();
+
+                    return Ok(newIncident);
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
+
+
+
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteIncident(int id)
+        {
+            try
+            {
+                var incident = await _db.Incidents.FindAsync(id);
+
+                if (incident == null)
+                    return NotFound(new { message = $"Incident with Id {id} not found." });
+
+                _db.Incidents.Remove(incident);
+                await _db.SaveChangesAsync();
+
+                return Ok(new { message = $"Incident with Id {id} deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
     }
 }
