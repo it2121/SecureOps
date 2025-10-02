@@ -16,7 +16,7 @@
 
 
     </MudAppBar>
-    <MudDrawer @bind-Open="@_open" ClipMode="@DrawerClipMode.Docked" Breakpoint="@Breakpoint.None" Elevation="1" Variant="@DrawerVariant.Mini">
+<MudDrawer @bind-Open="@_open" ClipMode="@DrawerClipMode.Docked" Breakpoint="@Breakpoint.None" Elevation="1" Variant=_openBuddy>
     <MudNavMenu Color="Color.Success"  Class="d-flex flex-column h-100">
 
         <MudNavLink Match="NavLinkMatch.All" Href="" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
@@ -56,12 +56,13 @@
 
 @code {
 
-   
+
 
     [CascadingParameter(Name = "DarkMode")]
     public bool DarkMode { get; set; }
     bool _expanded = true;
-    private bool _open = false;
+    private bool _open = true;
+    private DrawerVariant _openBuddy = DrawerVariant.Persistent;
     private bool _dense = false;
     private Breakpoint _breakpoint = Breakpoint.Lg;
     private DrawerClipMode _clipMode = DrawerClipMode.Never;
@@ -69,6 +70,7 @@
     private void ToggleDrawer()
     {
         _open = !_open;
+        if (_open) { _openBuddy = DrawerVariant.Persistent; } else { _openBuddy = DrawerVariant.Mini; }
     }
 
 
