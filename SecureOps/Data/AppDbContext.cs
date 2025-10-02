@@ -34,6 +34,13 @@ namespace SecureOps.Data
         .WithOne(u => u.Employee)
         .HasForeignKey<Employee>(e => e.UserId);
 
+
+
+            modelBuilder.Entity<Incident>()
+    .HasOne(i => i.Employee)
+    .WithMany(e => e.Incidents)
+    .HasForeignKey(i => i.EmployeeId)
+    .OnDelete(DeleteBehavior.Cascade);
         }
     }
 }

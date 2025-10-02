@@ -1,0 +1,111 @@
+﻿@page "/incidentCreate/"
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject NavigationManager NavManager
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+
+
+<MudPaper Class="pa-4 ma-4">
+    <MudText Typo="Typo.h5">Create New Incident</MudText>
+
+    <MudForm @ref="form" Class="mt-4">
+
+
+
+        <MudTextField @bind-Value="incident.Title" Label="Title"
+                      Required="true" For="@(() => incident.Title)" />
+        
+
+
+        <MudTextField @bind-Value="incident.PhotoPath" Label="Photo"
+                      Required="true" For="@(() => incident.PhotoPath)" />
+        
+        <MudTextField @bind-Value="incident.Description" Label="Description" 
+                      Required="true" For="@(() => incident.Description)" />
+        
+
+
+        <MudDatePicker Label="Incident Date"
+                       Required="true" ShowWeekNumbers="true" @bind-Date="incident.ReportedAt" />
+
+        <MudSelect @bind-Value="incident.Status" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
+                   T="string" Label="Select Status">
+            <MudSelectItem Value="@("In Progress")" />
+            <MudSelectItem Value="@("Reported")" />
+            <MudSelectItem Value="@("Resolved")" />
+        </MudSelect>
+
+
+        <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2" Class="mt-4">
+            <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
+                Cancel
+            </MudButton>
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="SaveIncident">
+                Save
+            </MudButton>
+        </MudStack>
+    </MudForm>
+</MudPaper>
+
+@code {
+    [Parameter] public int EmployeeId { get; set; }
+    private Employee employee;
+    protected override async Task OnInitializedAsync()
+    {
+
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
+
+
+
+
+
+
+    }
+    private MudForm form;
+    private Incident incident = new Incident();
+
+    private async Task SaveIncident()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        incident.EmployeeId = EmployeeId;
+        if (incident.ReportedAt == default)
+            incident.ReportedAt = DateTime.Now;
+
+        IncidentWithEmpDto dto = new IncidentWithEmpDto
+        {
+
+            Description = incident.Description,
+            ReportedAt = incident.ReportedAt,
+            Title = incident.Title,
+            Status = incident.Status,
+            EmpId = incident.EmployeeId,
+            PhotoPath = incident.PhotoPath
+        };
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/incident/RegisterIncident", dto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            // After saving, go back to employee incidents page
+            NavManager.NavigateTo($"/incidents/");
+        }
+        else
+        {
+        }
+    }
+
+    private void Cancel()
+    {
+        NavManager.NavigateTo($"/incidents/");
+    }
+
+   
+}

@@ -34,7 +34,9 @@
         <MudNavLink Match="NavLinkMatch.All" Href="/fetchdata" Icon="@Icons.Material.Filled.SafetyCheck">fetchdata</MudNavLink>
         <MudNavLink Match="NavLinkMatch.All" Href="/Emps" Icon="@Icons.Material.Filled.People">Emps</MudNavLink>
         <MudNavLink Match="NavLinkMatch.All" Href="/profile" Icon="@Icons.Material.Filled.Face">profile</MudNavLink>
-
+        <AuthorizeView>
+            <MudNavLink Match="NavLinkMatch.All" Href="/Incidents" Icon="@Icons.Material.Filled.AddReaction">Incidents</MudNavLink>
+        </AuthorizeView>
         <AuthorizeView>
     <NotAuthorized>
         <MudNavLink Match="NavLinkMatch.All" Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>

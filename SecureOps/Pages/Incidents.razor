@@ -1,0 +1,141 @@
+﻿@page "/incidents"
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@using SecureOps.Data
+@using SecureOps.Models
+@inject AppDbContext _context
+@inject NavigationManager NavManager
+@inject NavigationManager NavManager
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IDialogService DialogService
+
+<h3>Employee Incidents</h3>
+
+
+
+<MudPaper Class="pa-4">
+
+    @if (employee == null)
+    {
+        <MudText Typo="Typo.body1">Loading...</MudText>
+    }
+    else
+    {
+        <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+            <MudText Typo="Typo.h5">@employee.FullName Incidents</MudText>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateNewIncident">
+                + New Incident
+            </MudButton>
+        </MudStack>
+
+
+        @if (incidents == null || !incidents.Any())
+        {
+            <MudText Typo="Typo.body1">No incidents found for this employee.</MudText>
+        }
+        else
+        {
+            <MudTextField @bind-Value="_searchString" Placeholder="Search Incedent..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
+
+            <MudSimpleTable Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:300px;" : "")">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Status</th>
+                        <th>ReportedAt</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var incident in FilteredUsers)
+                    {
+                        <tr>
+                            <td>@incident.Title</td>
+                            <td>@incident.Status</td>
+                            <td>@incident.ReportedAt.ToString()</td>
+                            <td>
+                                <MudButton Color="Color.Primary" Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => EditIncident(incident.Id))">
+                                    Edit
+                                </MudButton>
+
+                                <MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
+                                    Open simple dialog
+                                </MudButton>
+
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </MudSimpleTable>
+        }
+    }
+
+
+
+
+
+
+</MudPaper>
+@code {
+
+
+    private void EditIncident(int incidentId)
+    {
+        // Navigate to the edit page for the selected incident
+        //NavManager.NavigateTo($"/incident-edit/{incidentId}");
+       // OpenDialogAsync();
+
+    
+    }
+    private Task OpenDialogAsync()
+    {
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        return DialogService.ShowAsync<IncidentCreate>("incident", options);
+    }
+
+
+    // private List<User> user;
+    private string _colorValue;
+    private string _searchString = "";
+    public int EmployeeId { get; set; }
+
+    private Employee employee;
+    private List<Incident> incidents = new();
+
+
+ 
+    private IEnumerable<Incident> FilteredUsers =>
+            string.IsNullOrWhiteSpace(_searchString)
+                ? incidents
+                : incidents.Where(u =>
+                    (u.Status?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.ReportedAt.ToString()?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
+
+
+
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        employee = JwtHelper.DecodeTokenToEmployee(token);
+
+
+        incidents = await Http.GetFromJsonAsync<List<Incident>>(NavManager.BaseUri + $"api/incident/GetIncidentsOfEmployee?EmpID={employee.Id}")
+    ?? new List<Incident>();
+      
+
+
+    }
+
+    private void CreateNewIncident()
+    {
+        // Navigate to a page or open a dialog for creating a new incident
+        NavManager.NavigateTo($"/incidentCreate/");
+    }
+}

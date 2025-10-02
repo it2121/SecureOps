@@ -1,12 +1,12 @@
-﻿using System.ComponentModel.DataAnnotations;
-
-namespace SecureOps.Models
+﻿namespace SecureOps.Models.Dto
 {
-    public class Incident
+    public class IncidentWithEmpDto
     {
-        public int Id { get; set; }
 
-        [Required, MaxLength(200)]
+
+        public int? Id { get; set; }
+        public int EmpId { get; set; }
+
         public string Title { get; set; } = string.Empty;
 
         public string? Description { get; set; }
@@ -17,8 +17,6 @@ namespace SecureOps.Models
 
         public DateTime? ReportedAt { get; set; } = DateTime.UtcNow;
 
-        // Foreign Key → Employee who reported
-        public int EmployeeId { get; set; }
-        public Employee? Employee { get; set; }
+
     }
 }
