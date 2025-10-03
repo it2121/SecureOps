@@ -19,10 +19,61 @@
         <MudTextField @bind-Value="incident.Title" Label="Title"
                       Required="true" For="@(() => incident.Title)" />
 
+            <MudFileUpload T="IBrowserFile"
+                           Accept=".png, .jpg"
+                           FilesChanged="UploadFiles2"
+                           MaximumFileCount="100">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.CloudUpload">
+                        Only image files
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload>
+
+            <MudTextField Label="Saved Path" @bind-Value="savedPath" ReadOnly="true" />
 
 
-        <MudTextField @bind-Value="incident.PhotoPath" Label="Photo"
-                      Required="true" For="@(() => incident.PhotoPath)" />
+            @* <MudFileUpload T="IBrowserFile" Accept=".png, .jpg" @bind-Value="incident.PhotoPath" FilesChanged="UploadFiles2"   MaximumFileCount="100">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.CloudUpload">
+                        Only image files
+                    </MudButton>
+                </ActivatorContent>
+            </MudFileUpload> *@
+
+            @* <MudFileUpload Accept=".png, .jpg" FilesChanged="UploadFiles" T="IBrowserFile">
+                <ActivatorContent>
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Primary">
+                        Single File
+                    </MudButton>
+                </ActivatorContent>
+                <SelectedTemplate>
+
+                    <MudText Required="true" Icon="@Icons.Material.Filled.AttachFile" @bind-Value="incident.PhotoPath" For="@(() => incident.PhotoPath)">@incident.PhotoPath</MudText>
+                        <MudTextField  @bind-Value="incident.PhotoPath" Label="Photo" Icon="@Icons.Material.Filled.AttachFile" ReadOnly="true"
+                                      Required="true" For="@(() => incident.PhotoPath)"  />
+                  
+                </SelectedTemplate>
+            </MudFileUpload> *@
+
+        @* <MudTextField @bind-Value="incident.PhotoPath" Label="Photo"
+                      Required="true" For="@(() => incident.PhotoPath)" /> *@
+
+
+            <!-- Only show image if PhotoPath is not null or empty -->
+            @if (!string.IsNullOrEmpty(savedPath))
+            {
+                <MudImage @bind-Value="savedPath" Src=@savedPath
+                          Width="332" Height="250"
+                          Elevation="25"
+                          Class="rounded-lg ma-4" />
+            }
+
 
         <MudTextField @bind-Value="incident.Description" Label="Description"
                       Required="true" For="@(() => incident.Description)" />
@@ -52,6 +103,49 @@
     </DialogActions>
 </MudDialog>
 @code {
+
+    private string savedPath = string.Empty;
+
+    private async Task UploadFiles2(IBrowserFile file)
+    {
+        // var file = File; // IBrowserFile
+
+        if (file == null)
+            return;
+
+        // Ensure folder exists
+        var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\photos");
+        if (!Directory.Exists(folderPath))
+            Directory.CreateDirectory(folderPath);
+
+        // Create unique filename
+        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+        var extension = Path.GetExtension(file.Name);
+        var fileName = file.Name;
+        var filePath = Path.Combine(folderPath, fileName);
+
+        // Save file to server
+        using var stream = file.OpenReadStream(maxAllowedSize: 10 * 1024 * 1024); // 10MB max
+        using var fs = new FileStream(filePath, FileMode.Create);
+        await stream.CopyToAsync(fs);
+
+        // Set the "path" to store in database or show to user
+        savedPath = $"photos/{fileName}"; // relative path
+
+
+
+
+        incident.PhotoPath = "wwwroot/"+savedPath;
+    }
+
+    private void UploadFiles(IBrowserFile file)
+    {
+        incident.PhotoPath = file.Name;
+        StateHasChanged();
+        //files.Add(file);
+        //TODO upload the files to the server
+    }
+
     [CascadingParameter]
     private IMudDialogInstance MudDialog { get; set; }
     [Parameter] public int IncidentId { get; set; }   // receives from parent
@@ -62,10 +156,10 @@
     {
         await SaveIncident();
 
-       
-    
-    
-    
+
+
+
+
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -90,7 +184,13 @@
             Incident tempIncident = await Http.GetFromJsonAsync<Incident>(NavManager.BaseUri + $"api/incident/GetIncident?IncidentId={IncidentId}");
 
             incident = tempIncident;
+            if (incident != null)
+            if (incident.PhotoPath != null){
+             savedPath = incident.PhotoPath.StartsWith(@"wwwroot\")
+            ? incident.PhotoPath.Substring(@"wwwroot\".Length)
+            : incident.PhotoPath;
 
+            }
         }
 
 
@@ -132,6 +232,11 @@
         else
         {
         }
+
+
+
+
+
     }
 
     // private void Cancel()

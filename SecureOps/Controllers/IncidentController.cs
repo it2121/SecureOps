@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
 using SecureOps.Models;
 using SecureOps.Models.Dto;
+using System.Globalization;
 
 namespace SecureOps.Controllers
 {
@@ -19,7 +20,73 @@ namespace SecureOps.Controllers
             _db = db;
         }
 
-        
+
+
+
+
+
+        public async Task<string> MoveAndRenamePhotoAsync(string originalFilePath)
+        {
+            if (string.IsNullOrEmpty(originalFilePath) || !System.IO.File.Exists(originalFilePath))
+                return null;
+
+            // 1. Ensure photos folder exists
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/photos");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+
+            // 2. Create unique filename with date and time to the second
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+            var extension = Path.GetExtension(originalFilePath);
+            var newFileName = $"{timestamp}_{Guid.NewGuid().ToString().Substring(0, 8)}{extension}";
+
+            var newFilePath = Path.Combine(folderPath, newFileName);
+
+            // 3. Move the file
+            System.IO.File.Copy(originalFilePath, newFilePath); // copy first, you can use Move if you want
+                                                                // System.IO.File.Delete(originalFilePath); // uncomment if you want to remove the original
+
+            // 4. Return relative path to store in DB
+            var relativePath = $"photos/{newFileName}";
+            return relativePath;
+        }
+
+
+
+
+
+
+
+        //public async Task<string> SavePhotoAsync(IFormFile photo)
+        //{
+        //    if (photo == null || photo.Length == 0)
+        //        return null;
+
+        //    // 1. Get folder path
+        //    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/photos");
+        //    if (!Directory.Exists(folderPath))
+        //        Directory.CreateDirectory(folderPath);
+
+        //    // 2. Create unique filename with date and time to second
+        //    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+        //    var extension = Path.GetExtension(photo.FileName); // keep original extension
+        //    var fileName = $"{timestamp}_{Guid.NewGuid().ToString().Substring(0, 8)}{extension}";
+
+        //    var filePath = Path.Combine(folderPath, fileName);
+
+        //    // 3. Save the file
+        //    using (var stream = new FileStream(filePath, FileMode.Create))
+        //    {
+        //        await photo.CopyToAsync(stream);
+        //    }
+
+        //    // 4. Return relative path to store in DB
+        //    var relativePath = $"photos/{fileName}";
+        //    return relativePath;
+        //}
+
+
+
         [HttpGet("GetIncident")]
         public async Task<Incident> GetIncident([FromQuery] int IncidentId)
         {
@@ -63,7 +130,7 @@ namespace SecureOps.Controllers
         }
 
         [HttpPost("RegisterIncident")]
-        public async Task<IActionResult> RegisterEmployee([FromBody] IncidentWithEmpDto Dto)
+        public async Task<IActionResult> RegisterIncident([FromBody] IncidentWithEmpDto Dto)
         {
             try
             {
@@ -98,12 +165,43 @@ namespace SecureOps.Controllers
             }
         }
 
+        private string? MoveAndRenamePhoto(string originalFilePath)
+        {
+            if (string.IsNullOrEmpty(originalFilePath) || !System.IO.File.Exists(originalFilePath))
+                return null;
+
+            var folderPath = Path.GetDirectoryName(originalFilePath);
+            if (string.IsNullOrEmpty(folderPath))
+                return null;
+
+            // Generate new name with timestamp + GUID
+            var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
+            var extension = Path.GetExtension(originalFilePath);
+            var newFileName = $"{timestamp}_{Guid.NewGuid().ToString().Substring(0, 8)}{extension}";
+            var newFilePath = Path.Combine(folderPath, newFileName);
+
+            // Rename the file
+            System.IO.File.Move(originalFilePath, newFilePath);
+
+            // Return just the new file name
+           // Console.WriteLine("original "+originalFilePath + " new"+ newFileName);
+            return newFilePath;
+        }
+
 
         [HttpPost("UpsertIncident")]
         public async Task<IActionResult> UpsertIncident([FromBody] IncidentWithEmpDto dto)
         {
             try
             {
+                // Move & rename the photo if provided
+                string? savedPhotoPath = null;
+                if (!string.IsNullOrEmpty(dto.PhotoPath))
+                {
+                    savedPhotoPath = MoveAndRenamePhoto(dto.PhotoPath);
+                }
+
+
                 // Check if incident exists (by Id in the DTO)
                 var existingIncident = await _db.Incidents.FindAsync(dto.Id);
 
@@ -112,7 +210,7 @@ namespace SecureOps.Controllers
                     // Update existing
                     existingIncident.Title = dto.Title;
                     existingIncident.Description = dto.Description;
-                    existingIncident.PhotoPath = dto.PhotoPath;
+                    existingIncident.PhotoPath = savedPhotoPath ?? existingIncident.PhotoPath;
                     existingIncident.Status = dto.Status;
                     existingIncident.ReportedAt = dto.ReportedAt;
                     existingIncident.EmployeeId = dto.EmpId;
@@ -129,7 +227,7 @@ namespace SecureOps.Controllers
                     {
                         Title = dto.Title,
                         Description = dto.Description,
-                        PhotoPath = dto.PhotoPath,
+                        PhotoPath = savedPhotoPath,
                         Status = dto.Status,
                         ReportedAt = dto.ReportedAt,
                         EmployeeId = dto.EmpId

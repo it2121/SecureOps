@@ -38,8 +38,8 @@
         {
             <MudTextField @bind-Value="_searchString" Placeholder="Search Incedent..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
 
-            <MudSimpleTable Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:500px;" : "")">
-                <thead>
+            <MudSimpleTable   Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:500px;" : "")">
+                <thead >
                     <tr>
                         <th>Title</th>
                         <th>Status</th>
@@ -54,7 +54,7 @@
                             <td>@incident.Status</td>
                             <td>@incident.ReportedAt.ToString()</td>
                             <td>
-                                <MudButton Color="Color.Primary" FullWidth="true" Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => EditIncident(incident.Id))">
+                                <MudButton Color="Color.Primary" FullWidth="true" Variant="Variant.Filled" Size="Size.Small" @onclick="@(() => OpenDialogAsync(incident.Id))">
                                     Edit
                                 </MudButton>
 
@@ -69,11 +69,11 @@
                                 <MudButton Variant="Variant.Filled" FullWidth="true"  Color="Color.Error" OnClick="@(() => OnButtonClickedAsync(incident.Id))">Delete</MudButton>
 
                             </td>
-                            <td>
+                            @* <td>
                                 <MudButton @onclick="@(() => OpenDialogAsync(incident.Id))" Variant="Variant.Filled" Color="Color.Primary">
                                     Open simple dialog
                                 </MudButton>
-                            </td>
+                            </td> *@
                         </tr>
                     }
                 </tbody>
