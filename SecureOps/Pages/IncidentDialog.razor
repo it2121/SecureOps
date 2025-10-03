@@ -1,0 +1,146 @@
+﻿@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject NavigationManager NavManager
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h5">Incident</MudText>
+    </TitleContent>
+    <DialogContent>
+         <MudForm @ref="form" Class="mt-4">
+        <MudTextField @bind-Value="incident.Title" Label="Title"
+                      Required="true" For="@(() => incident.Title)" />
+
+
+
+        <MudTextField @bind-Value="incident.PhotoPath" Label="Photo"
+                      Required="true" For="@(() => incident.PhotoPath)" />
+
+        <MudTextField @bind-Value="incident.Description" Label="Description"
+                      Required="true" For="@(() => incident.Description)" />
+
+
+
+        <MudDatePicker Label="Incident Date"
+                       Required="true" ShowWeekNumbers="true" @bind-Date="incident.ReportedAt" />
+
+        <MudSelect @bind-Value="incident.Status" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
+                   T="string" Label="Select Status">
+            <MudSelectItem Value="@("In Progress")" />
+            <MudSelectItem Value="@("Reported")" />
+            <MudSelectItem Value="@("Resolved")" />
+        </MudSelect>
+        </MudForm>
+
+    </DialogContent>
+    <DialogActions>
+            <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
+                Cancel
+            </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+                Save
+            </MudButton>
+
+    </DialogActions>
+</MudDialog>
+@code {
+    [CascadingParameter]
+    private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int IncidentId { get; set; }   // receives from parent
+
+
+
+    private  async void Submit() 
+    {
+        await SaveIncident();
+
+       
+    
+    
+    
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+
+
+
+
+
+    [Parameter] public int EmployeeId { get; set; }
+    private Employee employee;
+    protected override async Task OnInitializedAsync()
+    {
+
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
+
+        if (IncidentId != 0)
+        {
+            // var response = await Http.GetAsync(NavManager.BaseUri + $"api/Users/GetNameFromEmail?email={email}");
+
+            Incident tempIncident = await Http.GetFromJsonAsync<Incident>(NavManager.BaseUri + $"api/incident/GetIncident?IncidentId={IncidentId}");
+
+            incident = tempIncident;
+
+        }
+
+
+
+
+    }
+    private MudForm form;
+    private Incident incident = new Incident();
+
+      private async Task SaveIncident()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        incident.EmployeeId = EmployeeId;
+        if (incident.ReportedAt == default)
+            incident.ReportedAt = DateTime.Now;
+
+        IncidentWithEmpDto dto = new IncidentWithEmpDto
+        {
+
+            Description = incident.Description,
+            ReportedAt = incident.ReportedAt,
+            Title = incident.Title,
+            Status = incident.Status,
+            EmpId = incident.EmployeeId,
+            PhotoPath = incident.PhotoPath,
+            Id = incident.Id
+        };
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/incident/UpsertIncident", dto);
+
+        if (response.IsSuccessStatusCode)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+            // After saving, go back to employee incidents page
+           // NavManager.NavigateTo($"/incidents/");
+        }
+        else
+        {
+        }
+    }
+
+    // private void Cancel()
+    // {
+    //     NavManager.NavigateTo($"/incidents/");
+    // }
+
+
+
+
+
+}

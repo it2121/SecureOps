@@ -9,7 +9,7 @@
 @inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IDialogService DialogService
-
+@inject ISnackbar Snackbar
 <h3>Employee Incidents</h3>
 
 
@@ -24,7 +24,7 @@
     {
         <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
             <MudText Typo="Typo.h5">@employee.FullName Incidents</MudText>
-            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="CreateNewIncident">
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenDialogAsync(0))">
                 + New Incident
             </MudButton>
         </MudStack>
@@ -58,9 +58,7 @@
                                     Edit
                                 </MudButton>
 
-                              @*   <MudButton @onclick="OpenDialogAsync" Variant="Variant.Filled" Color="Color.Primary">
-                                    Open simple dialog
-                                </MudButton> *@
+                             
 
                             </td>
                             <td>
@@ -70,6 +68,11 @@
 
                                 <MudButton Variant="Variant.Filled" FullWidth="true"  Color="Color.Error" OnClick="@(() => OnButtonClickedAsync(incident.Id))">Delete</MudButton>
 
+                            </td>
+                            <td>
+                                <MudButton @onclick="@(() => OpenDialogAsync(incident.Id))" Variant="Variant.Filled" Color="Color.Primary">
+                                    Open simple dialog
+                                </MudButton>
                             </td>
                         </tr>
                     }
@@ -106,7 +109,7 @@
 
         if (_state)
         {
-            
+
             var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/incident/{incidentId}");
 
             if (response.IsSuccessStatusCode)
@@ -116,9 +119,9 @@
                     incidents.Remove(incidentToRemove);
                 StateHasChanged();
             }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
 
         }
-
         StateHasChanged();
     }
     private async Task DeleteIncident(int incidentId)
@@ -127,31 +130,71 @@
 
         if (response.IsSuccessStatusCode)
         {
+
             var incidentToRemove = incidents.FirstOrDefault(i => i.Id == incidentId);
             if (incidentToRemove is not null)
                 incidents.Remove(incidentToRemove);
+
+
+
+
             StateHasChanged();
+
+
         }
-        
+
     }
 
     private void EditIncident(int incidentId)
     {
-        // Navigate to the edit page for the selected incident
         NavManager.NavigateTo($"/incidentForm/{incidentId}");
-        // OpenDialogAsync();
 
 
     }
-    private Task OpenDialogAsync()
+    private  async Task OpenDialogAsync( int incidentId)
     {
-        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
 
-        return DialogService.ShowAsync<IncidentForm>("incident", options);
+
+        var options = new DialogOptions { CloseOnEscapeKey = true };
+        var parameters = new DialogParameters
+        {
+            { "IncidentId", incidentId }   // pass the variable
+        };
+        var dialog = await DialogService.ShowAsync<IncidentDialog>("Dialog", parameters,options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            incidents = await Http.GetFromJsonAsync<List<Incident>>(NavManager.BaseUri + $"api/incident/GetIncidentsOfEmployee?EmpID={employee.Id}")
+             ?? new List<Incident>();
+
+
+
+
+
+            var returnedValue = result.Data;
+
+            if (incidentId ==0){
+                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+
+            }
+            return ;
+    }
+    else
+    {
+            return ;
+    }
+
     }
 
 
-    // private List<User> user;
     private string _colorValue;
     private string _searchString = "";
     public int EmployeeId { get; set; }
@@ -193,7 +236,6 @@
 
     private void CreateNewIncident()
     {
-        // Navigate to a page or open a dialog for creating a new incident
         NavManager.NavigateTo($"/incidentForm/");
     }
 }
