@@ -154,8 +154,9 @@
     private  async Task OpenDialogAsync( int incidentId)
     {
 
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
 
-        var options = new DialogOptions { CloseOnEscapeKey = true };
+       // var options = new DialogOptions { CloseOnEscapeKey = true };
         var parameters = new DialogParameters
         {
             { "IncidentId", incidentId }   // pass the variable

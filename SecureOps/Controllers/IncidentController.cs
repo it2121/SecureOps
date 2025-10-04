@@ -1,10 +1,14 @@
 ﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
 using SecureOps.Models;
 using SecureOps.Models.Dto;
+using SecureOps.Pages;
 using System.Globalization;
+using System.Text.Json;
+using static System.Net.WebRequestMethods;
 
 namespace SecureOps.Controllers
 {
@@ -20,7 +24,16 @@ namespace SecureOps.Controllers
             _db = db;
         }
 
+        [HttpGet("GetNextIncidentID")]
+        public async Task<ActionResult<int>> GetNextIncidentID()
+        {
+            var lastIncidents = await _db.Incidents
+                .OrderByDescending(e => e.Id)
+                .FirstOrDefaultAsync();
 
+            int nextId = (lastIncidents != null) ? lastIncidents.Id + 1 : 1;
+            return Ok(nextId);
+        }
 
 
 
@@ -44,7 +57,7 @@ namespace SecureOps.Controllers
 
             // 3. Move the file
             System.IO.File.Copy(originalFilePath, newFilePath); // copy first, you can use Move if you want
-                                                                // System.IO.File.Delete(originalFilePath); // uncomment if you want to remove the original
+                                                               
 
             // 4. Return relative path to store in DB
             var relativePath = $"photos/{newFileName}";
@@ -55,35 +68,6 @@ namespace SecureOps.Controllers
 
 
 
-
-
-        //public async Task<string> SavePhotoAsync(IFormFile photo)
-        //{
-        //    if (photo == null || photo.Length == 0)
-        //        return null;
-
-        //    // 1. Get folder path
-        //    var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot/photos");
-        //    if (!Directory.Exists(folderPath))
-        //        Directory.CreateDirectory(folderPath);
-
-        //    // 2. Create unique filename with date and time to second
-        //    var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss", CultureInfo.InvariantCulture);
-        //    var extension = Path.GetExtension(photo.FileName); // keep original extension
-        //    var fileName = $"{timestamp}_{Guid.NewGuid().ToString().Substring(0, 8)}{extension}";
-
-        //    var filePath = Path.Combine(folderPath, fileName);
-
-        //    // 3. Save the file
-        //    using (var stream = new FileStream(filePath, FileMode.Create))
-        //    {
-        //        await photo.CopyToAsync(stream);
-        //    }
-
-        //    // 4. Return relative path to store in DB
-        //    var relativePath = $"photos/{fileName}";
-        //    return relativePath;
-        //}
 
 
 
@@ -115,15 +99,7 @@ namespace SecureOps.Controllers
        })
        .ToListAsync();
 
-/*
 
-            var employee = await _db.Employees
-    .Include(e => e.Incidents)
-    .FirstOrDefaultAsync(e => e.Id == EmpID);
-
-           var incidents = employee?.Incidents ?? new List<Incident>();
-
-*/
                
 
             return Ok(incidents);
@@ -156,6 +132,9 @@ namespace SecureOps.Controllers
 
                 _db.Incidents.Add(createdIncedent);
                 await _db.SaveChangesAsync();
+
+
+             
 
                 return Ok(createdIncedent);
             }
@@ -190,27 +169,33 @@ namespace SecureOps.Controllers
 
 
         [HttpPost("UpsertIncident")]
-        public async Task<IActionResult> UpsertIncident([FromBody] IncidentWithEmpDto dto)
+
+        public async Task<IActionResult> UpsertIncident([FromForm] string dtoJson, [FromForm] List<IFormFile> files)
+
         {
             try
             {
+                IncidentWithEmpDto dto = JsonSerializer.Deserialize<IncidentWithEmpDto>(dtoJson);
+
                 // Move & rename the photo if provided
-                string? savedPhotoPath = null;
-                if (!string.IsNullOrEmpty(dto.PhotoPath))
-                {
-                    savedPhotoPath = MoveAndRenamePhoto(dto.PhotoPath);
-                }
+           
 
 
                 // Check if incident exists (by Id in the DTO)
                 var existingIncident = await _db.Incidents.FindAsync(dto.Id);
 
+
                 if (existingIncident is not null)
                 {
+
+                    string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\photos\\" + dto.Id);
+                    if (!Directory.Exists(folderPath))
+                        Directory.CreateDirectory(folderPath);
+                    dto.PhotoPath = folderPath;
                     // Update existing
                     existingIncident.Title = dto.Title;
                     existingIncident.Description = dto.Description;
-                    existingIncident.PhotoPath = savedPhotoPath ?? existingIncident.PhotoPath;
+                    existingIncident.PhotoPath = dto.PhotoPath;
                     existingIncident.Status = dto.Status;
                     existingIncident.ReportedAt = dto.ReportedAt;
                     existingIncident.EmployeeId = dto.EmpId;
@@ -218,16 +203,49 @@ namespace SecureOps.Controllers
                     _db.Incidents.Update(existingIncident);
                     await _db.SaveChangesAsync();
 
+
+
+
+                    foreach (var file in files)
+                    {
+                      
+                       
+
+                        // Create unique filename
+                        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                        var extension = Path.GetExtension(file.FileName);
+                        var fileName = Path.GetFileName(file.FileName)  + "_" + Guid.NewGuid().ToString().Substring(0, 8) + extension;
+                        var filePath = Path.Combine(dto.PhotoPath, fileName);
+                        // Save file to server
+                
+
+                        await using var stream = file.OpenReadStream(); // 100 MB
+                        await using var fs = new FileStream(filePath, FileMode.Create);
+                        await stream.CopyToAsync(fs);
+
+                    }
+
+
                     return Ok(existingIncident);
                 }
                 else
                 {
+
+                    var lastInsideant = await _db.Incidents
+                .OrderByDescending(e => e.Id)
+                .FirstOrDefaultAsync();
+
+                    int nextId = (lastInsideant != null) ? lastInsideant.Id + 1 : 1;
                     // Create new
-                    var newIncident = new Incident
+                    string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\photos\\" + nextId);
+                    if (!Directory.Exists(folderPath))
+                        Directory.CreateDirectory(folderPath);
+                    dto.PhotoPath = folderPath;
+                   var newIncident = new Incident
                     {
                         Title = dto.Title,
                         Description = dto.Description,
-                        PhotoPath = savedPhotoPath,
+                        PhotoPath = dto.PhotoPath,
                         Status = dto.Status,
                         ReportedAt = dto.ReportedAt,
                         EmployeeId = dto.EmpId
@@ -235,6 +253,33 @@ namespace SecureOps.Controllers
 
                     await _db.Incidents.AddAsync(newIncident);
                     await _db.SaveChangesAsync();
+
+                    
+                    foreach (var file in files)
+                    {
+
+
+                     
+
+                        // Create unique filename
+                        var timestamp = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                        var extension = Path.GetExtension(file.FileName);
+                        var fileName = Path.GetFileName(file.FileName) + "_" + Guid.NewGuid().ToString().Substring(0, 8) + extension;
+                        var filePath = Path.Combine(folderPath, fileName);
+                        // Save file to server
+                        //using var stream = file.OpenReadStream(); // 60MB max
+                        //using var fs = new FileStream(filePath, FileMode.Create);
+                        //await stream.CopyToAsync(fs);
+
+                       /* await using var stream = new FileStream(filePath, FileMode.Create);
+
+                        await file.CopyToAsync(stream);*/
+
+                        await using var stream = file.OpenReadStream(); // 100 MB
+                        await using var fs = new FileStream(filePath, FileMode.Create);
+
+                        await stream.CopyToAsync(fs);
+                    }
 
                     return Ok(newIncident);
                 }
