@@ -3,6 +3,7 @@
 @using FormCraft
 @using FormCraft.ForMudBlazor
 @using MudBlazor
+@using MudBlazor.Extensions.Options
 
 
 <PageTitle>SecureOps</PageTitle>
@@ -55,4 +56,51 @@
 </MudLayout>
 @code {
     public bool DarkMode { get; set; } = true;
+    // Light Theme
+    private MudTheme LightTheme = new MudTheme()
+        {
+            PaletteLight = new PaletteLight()
+            {
+                Primary = Colors.Teal.Default,          // Main accent
+                Secondary = Colors.Indigo.Accent2,     // Highlight
+                Tertiary = Colors.BlueGray.Default,    // Neutralish
+                Background = Colors.BlueGray.Lighten5,     // Page background
+                Surface = Colors.BlueGray.Lighten5,                 // Cards/papers
+                AppbarBackground = Colors.Teal.Darken2,
+                AppbarText = Colors.Shades.White,
+                DrawerBackground = Colors.BlueGray.Lighten5,
+                DrawerText = Colors.BlueGray.Darken4,
+                Success = Colors.Green.Accent3,
+                Info = Colors.Teal.Lighten1,
+                Warning = Colors.Amber.Default,
+                Error = Colors.Red.Accent2,
+                TextPrimary = Colors.BlueGray.Darken4,
+                TextSecondary = Colors.BlueGray.Darken2
+            },
+            
+        };
+
+    // Dark Theme
+    private MudTheme DarkTheme = new MudTheme()
+        {
+            PaletteDark = new PaletteDark()
+            {
+                Primary = Colors.Teal.Lighten1,         // Main accent
+                Secondary = Colors.Indigo.Accent1,      // Highlight
+                Tertiary = Colors.BlueGray.Darken1,     // Neutralish
+                Background = Colors.BlueGray.Darken4,   // Page background
+                Surface = Colors.BlueGray.Darken3,      // Cards/papers
+                AppbarBackground = Colors.Brown.Darken3,
+                AppbarText = Colors.Shades.White,
+                DrawerBackground = Colors.BlueGray.Darken4,
+                DrawerText = Colors.Gray.Lighten3,
+                Success = Colors.Green.Accent2,
+                Info = Colors.Teal.Lighten2,
+                Warning = Colors.Amber.Darken2,
+                Error = Colors.Red.Accent2,
+                TextPrimary = Colors.Gray.Lighten3,
+                TextSecondary = Colors.Gray.Lighten1
+            },
+        
+        };
 }

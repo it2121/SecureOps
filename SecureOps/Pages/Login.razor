@@ -1,5 +1,6 @@
 ﻿@page "/login"
 @using MudBlazor
+@using MudExtensions
 @using SecureOps.Services
 @inject HttpClient Http
 @inject NavigationManager NavManager
@@ -15,8 +16,12 @@
             <MudTextField @bind-Value="loginModel.Email" Label="Name" Variant="Variant.Outlined" InputType="InputType.Email"
             AdornmentIcon="@Icons.Material.Filled.AttachMoney" AdornmentColor="Color.Warning" />
 
-            <MudTextField @bind-Value="loginModel.Password" Label="Password" Variant="Variant.Outlined"
-            InputType="@PasswordInput" Adornment="Adornment.End" AdornmentIcon="@PasswordInputIcon" OnAdornmentClick="ButtonTestclick" AdornmentAriaLabel="Show Password" />
+            <MudPasswordField @bind-Value="@loginModel.Password" bind-PasswordMode="true"  Variant="Variant.Outlined" Label="Password" DisablePaste="true">
+              
+            </MudPasswordField>
+
+
+       
 
         </MudForm>
     </MudPaper>
@@ -28,6 +33,7 @@
 </MudPaper>
 
 @code {
+    bool _passwordMode;
 
     bool isShow;
     InputType PasswordInput = InputType.Password;
