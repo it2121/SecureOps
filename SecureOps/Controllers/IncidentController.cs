@@ -290,7 +290,33 @@ namespace SecureOps.Controllers
             }
         }
 
+        [HttpDelete("DeleteImage")]
+        public IActionResult DeleteImage([FromQuery] string relativePath)
+        {
+            if (string.IsNullOrWhiteSpace(relativePath))
+                return BadRequest("Invalid image path");
 
+            try
+            {
+                // Combine wwwroot with relative path
+                var rootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+                var fullPath = Path.Combine(rootPath, relativePath.TrimStart('\\', '/'));
+
+                if (System.IO.File.Exists(fullPath))
+                {
+                    System.IO.File.Delete(fullPath);
+                    return Ok(new { message = "Image deleted successfully" });
+                }
+                else
+                {
+                    return NotFound(new { message = "Image not found" });
+                }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error deleting image", error = ex.Message });
+            }
+        }
 
         [HttpDelete("{id}")]
         public async Task<IActionResult> DeleteIncident(int id)
@@ -304,6 +330,14 @@ namespace SecureOps.Controllers
 
                 _db.Incidents.Remove(incident);
                 await _db.SaveChangesAsync();
+
+                string folderPath = Path.Combine("wwwroot\\photos\\" + id);
+
+                if (Directory.Exists(folderPath))
+                {
+                    Directory.Delete(folderPath, recursive: true);
+
+                }
 
                 return Ok(new { message = $"Incident with Id {id} deleted successfully." });
             }

@@ -1,18 +1,15 @@
 ﻿@using MudBlazor
 @using SecureOps.Models
 @using SecureOps.Models.Dto
-@using MudBlazor
-@using SecureOps.Models
-@using SecureOps.Models.Dto
 @using System.Text.Json
 @using System.Text
 @inject HttpClient Http
 @inject NavigationManager NavManager
-@inject NavigationManager NavManager
-@inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
 
-<MudDialog Class=" custom-dialog blur dialog-background"
+<MudDialog Class="custom-dialog blur dialog-background"
 TitleClass="blur dialog-background-title"
 ContentClass="dialog-background-surface py-10"
 ActionsClass="dialog-background-surface">
@@ -22,7 +19,6 @@ ActionsClass="dialog-background-surface">
     </TitleContent>
     <DialogContent>
         <MudForm @ref="form" Class="mt-4">
-
             <MudStack Spacing="3">
                 <MudPaper Class="pa-4">
                     <MudTextField @bind-Value="incident.Title" Label="Title"
@@ -56,7 +52,6 @@ ActionsClass="dialog-background-surface">
                 </MudGrid>
 
                 <MudPaper Class="pa-4">
-
                     <MudFileUpload T="IReadOnlyList<IBrowserFile>"
                     Accept=".png, .jpg"
                     FilesChanged="UploadFiles2"
@@ -70,48 +65,36 @@ ActionsClass="dialog-background-surface">
                         </ActivatorContent>
                     </MudFileUpload>
 
+              
 
-
-                    @if (savedPaths.Count > 0)
+                    @if (files != null && imageUrls.Count > 0)
                     {
-                        foreach (var savedPath in savedPaths)
-                        {
-                            @* <MudTextField Label="Saved Path" @bind-Value="savedPath" ReadOnly="true" /> *@
-
-
-
-                            <MudImage Src=@savedPath
-                            Width="180"
-                            Elevation="25"
-                            Class="rounded-lg ma-4" />
-
-                        }
-                    }
-
-
-                    @if (files != null)
-                    {
-                        <MudList T="string">
+                        <MudList T="string" Class="d-flex flex-wrap">
                             @foreach (var imageUrl in imageUrls)
                             {
-                                <MudImage Src="@imageUrl"
-                                Width="180"
-                                Elevation="25"
-                                Class="rounded-lg ma-4" />
+                                <MudPaper Class="relative ma-2" Style="display:inline-block; position:relative;">
+                                    @if (imageUrl.StartsWith("\\photos") ){
+                                    <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                    Color="Color.Primary"
+                                    Size="Size.Small"
+                                    Class="absolute -top-2 -right-2 z-10 bg-dark rounded-full shadow-md"
+                                    OnClick="@(() => ConfirmDelete(imageUrl))" />
+                                    }
+                                    <MudImage Src="@imageUrl"
+                                    Height="150"
+                                    Elevation="25"
+                                    Class="rounded-lg" />
+                                </MudPaper>
                             }
                         </MudList>
-
-
-
                     }
 
 
                 </MudPaper>
             </MudStack>
-
         </MudForm>
-
     </DialogContent>
+
     <DialogActions>
         <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
             Cancel
@@ -119,14 +102,17 @@ ActionsClass="dialog-background-surface">
         <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
             Save
         </MudButton>
-
     </DialogActions>
 </MudDialog>
+
+
+
+
 
 <style>
     .custom-dialog {
     width: 1300px !important;
-    max-width: 90vw; /* prevent overflow on small screens */
+    max-width: 90vw;
     }
 
     .blur {
@@ -147,19 +133,98 @@ ActionsClass="dialog-background-surface">
     }
 </style>
 
-
-
 @code {
+
+
+
+
     private List<string> savedPaths = new List<string>();
     IList<IBrowserFile> files = new List<IBrowserFile>();
     private List<string> imageUrls = new List<string>();
-
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
     string folderPath = string.Empty;
     string FolderIncidentID = string.Empty;
 
+
+    private async Task ConfirmDelete(string imageUrl)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+
+
+
+    
+
+        if (result != null)
+        {
+            await DeleteImageAsync(imageUrl);
+        }
+    }
+
+
+
+
+    private async Task OnButtonClickedAsync(string relativePath)
+    {
+        bool? result = await _mudMessageBox.ShowAsync();
+        _state = result is null ? false : true;
+
+        if (_state)
+        {
+
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/incident/DeleteImage?relativePath={Uri.EscapeDataString(relativePath)}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                imageUrls.Remove(relativePath); 
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+            }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
+
+        }
+        StateHasChanged();
+    }
+
+
+    private async Task DeleteImageAsync(string relativePath)
+    {
+        int index = imageUrls.IndexOf(relativePath);
+        if (index < 0) return; // safety check
+
+        if (relativePath.StartsWith("\\photos") )
+        {
+            // This is a saved image on the server
+            var response = await Http.DeleteAsync(
+                NavManager.BaseUri + $"api/incident/DeleteImage?relativePath={Uri.EscapeDataString(relativePath)}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error deleting image: {error}");
+                return;
+            }
+        }
+        else
+        {
+            // This is a newly uploaded image (Base64)
+            if (index < files.Count)
+                files.RemoveAt(index);
+        }
+
+        // Remove from UI list
+        imageUrls.RemoveAt(index);
+        StateHasChanged();
+    }
+
     private async Task UploadFiles2(IReadOnlyList<IBrowserFile> files)
     {
-
         foreach (var file in files)
         {
             this.files.Add(file);
@@ -173,107 +238,60 @@ ActionsClass="dialog-background-surface">
             var imageUrl = $"data:{file.ContentType};base64,{imageBase64}";
             imageUrls.Add(imageUrl);
 
-   
-
             StateHasChanged();
-
         }
     }
 
-    private void UploadFiles(IBrowserFile file)
-    {
-        incident.PhotoPath = file.Name;
-        StateHasChanged();
-        //files.Add(file);
-        //TODO upload the files to the server
-    }
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int IncidentId { get; set; }
+    [Parameter] public int EmployeeId { get; set; }
 
-    [CascadingParameter]
-    private IMudDialogInstance MudDialog { get; set; }
-    [Parameter] public int IncidentId { get; set; }   // receives from parent
-
-
+    private Employee employee;
+    private MudForm form;
+    private Incident incident = new Incident();
 
     private async void Submit()
     {
         await SaveIncident();
-
-
-
-
-
     }
 
     private void Cancel() => MudDialog.Cancel();
 
-
-
-
-
-
-    [Parameter] public int EmployeeId { get; set; }
-    private Employee employee;
     protected override async Task OnInitializedAsync()
     {
-
         var token = await LocalStorage.GetItemAsync<string>("authToken");
         EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
 
         if (IncidentId != 0)
         {
-
             Incident tempIncident = await Http.GetFromJsonAsync<Incident>(NavManager.BaseUri + $"api/incident/GetIncident?IncidentId={IncidentId}");
-
             incident = tempIncident;
 
             string FolderPathHolder = "";
-            if (incident != null)
-                if (incident.PhotoPath != null)
+            if (incident != null && incident.PhotoPath != null)
+            {
+                FolderPathHolder = incident.PhotoPath.StartsWith(@"wwwroot\")
+                    ? incident.PhotoPath.Substring(@"wwwroot\".Length)
+                    : incident.PhotoPath;
+
+                string[] filePaths = Directory.GetFiles(FolderPathHolder);
+                foreach (var filePath in filePaths)
                 {
-                    FolderPathHolder = incident.PhotoPath.StartsWith(@"wwwroot\")
-            ? incident.PhotoPath.Substring(@"wwwroot\".Length)
-            : incident.PhotoPath;
-
-
-
-                    string[] filePaths = Directory.GetFiles(FolderPathHolder);
-                    //imageUrls.Clear();
-                    foreach (var filePath in filePaths)
+                    string relativePath = "";
+                    int index = filePath.IndexOf("wwwroot");
+                    if (index >= 0)
                     {
-
-                        string relativePath = "";
-
-                        int index = filePath.IndexOf("wwwroot");
-                        if (index >= 0)
-                        {
-                            relativePath = filePath.Substring(index + "wwwroot".Length);
-                        }
-
-
-
-
-
-
-                        imageUrls.Add(relativePath);
-
+                        relativePath = filePath.Substring(index + "wwwroot".Length);
                     }
-
+                    imageUrls.Add(relativePath);
                 }
+            }
         }
         else
         {
-
             incident.Id = await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetNextIncidentID");
-
-
         }
-
-
-
-
     }
-    private MudForm form;
-    private Incident incident = new Incident();
 
     private async Task SaveIncident()
     {
@@ -287,7 +305,6 @@ ActionsClass="dialog-background-surface">
 
         IncidentWithEmpDto dto = new IncidentWithEmpDto
             {
-
                 Description = incident.Description,
                 ReportedAt = incident.ReportedAt,
                 Title = incident.Title,
@@ -296,57 +313,45 @@ ActionsClass="dialog-background-surface">
                 PhotoPath = incident.PhotoPath,
                 Id = incident.Id
             };
+
         bool okay = true;
-        foreach (var file in files)
+        if (files.Count() != 0)
+        {
+            foreach (var file in files)
+            {
+                using var content = new MultipartFormDataContent();
+
+                var dtoJson = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
+                content.Add(dtoJson, "dtoJson");
+
+                var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 200_000_000));
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
+                content.Add(streamContent, "files", file.Name);
+
+                var response = await Http.PostAsync(NavManager.BaseUri + "api/incident/UpsertIncident", content);
+                if (!response.IsSuccessStatusCode)
+                {
+                    okay = false;
+                }
+            }
+        }
+        else
         {
             using var content = new MultipartFormDataContent();
 
-            // Add DTO as JSON string
             var dtoJson = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
             content.Add(dtoJson, "dtoJson");
 
-            // Add files
-
-
-            var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 200_000_000)); // 50 MB per file
-            streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);
-            content.Add(streamContent, "files", file.Name);
-
-
             var response = await Http.PostAsync(NavManager.BaseUri + "api/incident/UpsertIncident", content);
-            if (response.IsSuccessStatusCode)
+            if (!response.IsSuccessStatusCode)
             {
-
-
-             
+                okay = false;
             }
-            else
-            {
-                okay=false; 
-            }
-
-          
         }
+
         if (okay)
         {
             MudDialog.Close(DialogResult.Ok(true));
         }
-
-     
-
-
-
-
-
     }
-
-    // private void Cancel()
-    // {
-    //     NavManager.NavigateTo($"/incidents/");
-    // }
-
-
-
-
-
 }
