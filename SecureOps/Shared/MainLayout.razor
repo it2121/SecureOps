@@ -4,13 +4,13 @@
 @using FormCraft.ForMudBlazor
 @using MudBlazor
 @using MudBlazor.Extensions.Options
-
+@using MudBlazor.ThemeManager
 
 <PageTitle>SecureOps</PageTitle>
 @* Required *@
 
 
-<MudThemeProvider IsDarkMode=DarkMode  />
+<MudThemeProvider IsDarkMode=DarkMode Theme="_themeManager.Theme" />
 <MudPopoverProvider />
 <MudSnackbarProvider />
 <MudDialogProvider FullWidth="true"
@@ -49,12 +49,39 @@
     z-index: 1000;" />
             </MudContainer>
         </MudMainContent>
-  
+            <MudThemeManagerButton OnClick="@((e) => OpenThemeManager(true))" />
+            <MudThemeManager Open="_themeManagerOpen"
+                OpenChanged="OpenThemeManager" Theme="_themeManager" 
+                ThemeChanged="UpdateTheme" />
     </main>
 </div>
-
+ 
 </MudLayout>
 @code {
+
+
+
+    private ThemeManagerTheme _themeManager = new ThemeManagerTheme();
+    public bool _themeManagerOpen = false;
+
+    void OpenThemeManager(bool value)
+    {
+        _themeManagerOpen = value;
+    }
+
+    void UpdateTheme(ThemeManagerTheme value)
+    {
+        _themeManager = value;
+        StateHasChanged();
+    }
+
+    protected override void OnInitialized()
+    {
+        StateHasChanged();
+    }
+
+
+
     public bool DarkMode { get; set; } = true;
     // Light Theme
     private MudTheme LightTheme = new MudTheme()

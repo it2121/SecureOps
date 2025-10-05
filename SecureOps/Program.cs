@@ -14,6 +14,7 @@ using SecureOps.Data;
 using SecureOps.Data.Seeds;
 using SecureOps.Services;
 using System.Text;
+using MudBlazor.Translations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,7 @@ builder.Services.AddAuthentication(options =>
 builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddHttpClient();
+builder.Services.AddMudTranslations();
 
 builder.Services.AddSingleton<WeatherForecastService>();
 builder.Services.AddMudServices();
