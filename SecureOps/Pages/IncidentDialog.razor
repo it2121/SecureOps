@@ -22,27 +22,27 @@ ActionsClass="dialog-background-surface">
     <DialogContent>
         <MudForm @ref="form" Class="mt-4">
             <MudStack Spacing="3">
-                <MudPaper Class="pa-4">
+                <MudPaper Class="pa-4  dialog-background-container">
                     <MudTextField @bind-Value="incident.Title" Label="Title"
                     Required="true" For="@(() => incident.Title)" />
                 </MudPaper>
                 <MudDivider />
 
-                <MudPaper Class="pa-4">
+                <MudPaper Class="pa-4 dialog-background-container">
                     <MudTextField @bind-Value="incident.Description" Label="Description"
                     Required="true" For="@(() => incident.Description)" />
                 </MudPaper>
 
                 <MudGrid>
                     <MudItem xs="6">
-                        <MudPaper Class="pa-4">
+                        <MudPaper Class="pa-4 dialog-background-container">
                             <MudDatePicker Label="Incident Date"
                             Required="true" ShowWeekNumbers="true" @bind-Date="incident.ReportedAt" />
                         </MudPaper>
                     </MudItem>
 
                     <MudItem xs="6">
-                        <MudPaper Class="pa-4">
+                        <MudPaper Class="pa-4 dialog-background-container">
                             <MudSelect @bind-Value="incident.Status" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
                             T="string" Label="Select Status">
                                 <MudSelectItem Value="@("In Progress")" />
@@ -53,7 +53,7 @@ ActionsClass="dialog-background-surface">
                     </MudItem>
                 </MudGrid>
 
-                <MudPaper Class="pa-4">
+                <MudPaper Class="pa-4 dialog-background-container">
                     <MudFileUpload T="IReadOnlyList<IBrowserFile>"
                     Accept=".png, .jpg"
                     FilesChanged="UploadFiles2"
@@ -131,8 +131,13 @@ ActionsClass="dialog-background-surface">
     }
 
     .dialog-background-surface {
-    background: rgb(from var(--mud-palette-surface) r g b / 75%);
+    background: rgb(from var(--mud-palette-surface) r g b / 45%);
     }
+
+    .dialog-background-container {
+    background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
 </style>
 
 @code {

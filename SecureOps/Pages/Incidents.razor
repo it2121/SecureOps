@@ -161,36 +161,36 @@
     private  async Task OpenDialogAsync( int incidentId)
     {
 
-       // var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
-        var options = new DialogOptionsEx
-            {
-                MaximizeButton = true,
-                CloseButton = true,
-                CloseOnEscapeKey = true,
-              BackdropClick=false,
-                MaxWidth = MaxWidth.Medium,
-                FullWidth = true,
-                Resizeable = true,
-                DragMode = MudDialogDragMode.SnapDrag,
-                DisableSizeMarginY = true,
-                DisablePositionMargin = true,
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+        // var options = new DialogOptionsEx
+        //     {
+        //         MaximizeButton = true,
+        //         CloseButton = true,
+        //         CloseOnEscapeKey = true,
+        //       BackdropClick=false,
+        //         MaxWidth = MaxWidth.Medium,
+        //         FullWidth = true,
+        //         Resizeable = true,
+        //         DragMode = MudDialogDragMode.SnapDrag,
+        //         DisableSizeMarginY = true,
+        //         DisablePositionMargin = true,
 
-            };
+        //     };
 
 
-        options.DialogAppearance = MudExAppearance.FromCss(MudExCss.Classes.Dialog.ColorfullGlass)
-            .WithStyle(b => b
+        // options.DialogAppearance = MudExAppearance.FromCss(MudExCss.Classes.Dialog.ColorfullGlass)
+        //     .WithStyle(b => b
                
-                .WithBoxShadow($" 0 8px 32px 0 {new MudColor("#00897B").SetAlpha(0.2).ToString(MudColorOutputFormats.RGBA)}")
-                .WithBackgroundColor(new MudColor("#00897B").SetAlpha(1))
-            );
-        options.DialogBackgroundAppearance = MudExAppearance.FromCss(MudExCss.Classes.Backgrounds.MovingDots)
-            .WithStyle(new
-            {
-                Border = "4px solid",
-                BorderColor = Color.Secondary,
-                BorderRadius = 8
-            });
+        //         .WithBoxShadow($" 0 8px 32px 0 {new MudColor("#00897B").SetAlpha(0.2).ToString(MudColorOutputFormats.RGBA)}")
+        //         .WithBackgroundColor(new MudColor("#00897B").SetAlpha(1))
+        //     );
+        // options.DialogBackgroundAppearance = MudExAppearance.FromCss(MudExCss.Classes.Backgrounds.MovingDots)
+        //     .WithStyle(new
+        //     {
+        //         Border = "4px solid",
+        //         BorderColor = Color.Secondary,
+        //         BorderRadius = 8
+        //     });
 
        // var options = new DialogOptions { CloseOnEscapeKey = true };
         var parameters = new DialogParameters
@@ -199,7 +199,7 @@
             // pass the variable
         };
 
-        var dialog = await DialogService.ShowExAsync<IncidentDialog>("Dialog", parameters, options);
+        var dialog = await DialogService.ShowAsync<IncidentDialog>("Dialog", parameters, options);
 
         // Wait for dialog to close and get result
         var result = await dialog.Result;
