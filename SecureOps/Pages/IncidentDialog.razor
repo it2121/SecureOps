@@ -3,6 +3,8 @@
 @using SecureOps.Models.Dto
 @using System.Text.Json
 @using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
@@ -65,7 +67,7 @@ ActionsClass="dialog-background-surface">
                         </ActivatorContent>
                     </MudFileUpload>
 
-              
+
 
                     @if (files != null && imageUrls.Count > 0)
                     {
@@ -74,11 +76,11 @@ ActionsClass="dialog-background-surface">
                             {
                                 <MudPaper Class="relative ma-2" Style="display:inline-block; position:relative;">
                                     @if (imageUrl.StartsWith("\\photos") ){
-                                    <MudIconButton Icon="@Icons.Material.Filled.Close"
-                                    Color="Color.Primary"
-                                    Size="Size.Small"
-                                    Class="absolute -top-2 -right-2 z-10 bg-dark rounded-full shadow-md"
-                                    OnClick="@(() => ConfirmDelete(imageUrl))" />
+                                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                        Color="Color.Primary"
+                                        Size="Size.Small"
+                                        Class="absolute -top-2 -right-2 z-10 bg-dark rounded-full shadow-md"
+                                        OnClick="@(() => ConfirmDelete(imageUrl))" />
                                     }
                                     <MudImage Src="@imageUrl"
                                     Height="150"
@@ -156,7 +158,7 @@ ActionsClass="dialog-background-surface">
 
 
 
-    
+
 
         if (result != null)
         {
@@ -289,7 +291,7 @@ ActionsClass="dialog-background-surface">
         }
         else
         {
-            incident.Id = await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetNextIncidentID");
+            //incident.Id = await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetNextIncidentID");
         }
     }
 
@@ -317,12 +319,29 @@ ActionsClass="dialog-background-surface">
         bool okay = true;
         if (files.Count() != 0)
         {
+
+            bool first = true;
             foreach (var file in files)
             {
                 using var content = new MultipartFormDataContent();
 
+                if (first)
+                {
+                    
+                    first = false;
+                }
+                else
+                {
+                    dto.Id =  await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetCurrentIncidentID");
+                    incident.Id = await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetCurrentIncidentID");
+
+                    
+                    
+                }
+
                 var dtoJson = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
                 content.Add(dtoJson, "dtoJson");
+                
 
                 var streamContent = new StreamContent(file.OpenReadStream(maxAllowedSize: 200_000_000));
                 streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(file.ContentType);

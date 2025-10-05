@@ -24,15 +24,15 @@ namespace SecureOps.Controllers
             _db = db;
         }
 
-        [HttpGet("GetNextIncidentID")]
-        public async Task<ActionResult<int>> GetNextIncidentID()
+        [HttpGet("GetCurrentIncidentID")]
+        public async Task<ActionResult<int>> GetCurrentIncidentID()
         {
-            var lastIncidents = await _db.Incidents
-                .OrderByDescending(e => e.Id)
-                .FirstOrDefaultAsync();
+            
 
-            int nextId = (lastIncidents != null) ? lastIncidents.Id + 1 : 1;
-            return Ok(nextId);
+            var nextId = await _db.Incidents
+.FromSqlRaw("SELECT CAST(IDENT_CURRENT('Incidents') + IDENT_INCR('Incidents') AS int) AS Id")
+.Select(x => x.Id)
+.FirstAsync(); return Ok(nextId-1);
         }
 
 
@@ -231,11 +231,18 @@ namespace SecureOps.Controllers
                 else
                 {
 
-                    var lastInsideant = await _db.Incidents
-                .OrderByDescending(e => e.Id)
-                .FirstOrDefaultAsync();
+                    //    var lastInsideant = await _db.Incidents
+                    //.OrderByDescending(e => e.Id)
+                    //.FirstOrDefaultAsync();
 
-                    int nextId = (lastInsideant != null) ? lastInsideant.Id + 1 : 1;
+                    // int nextId = (lastInsideant != null) ? lastInsideant.Id + 1 : 1;
+                    //var lastId = await _db.Incidents.MaxAsync(e => (int?)e.Id) ?? 0;
+                    //var nextId = lastId + 1;
+                    var nextId = await _db.Incidents
+      .FromSqlRaw("SELECT CAST(IDENT_CURRENT('Incidents') + IDENT_INCR('Incidents') AS int) AS Id")
+      .Select(x => x.Id)
+      .FirstAsync();
+
                     // Create new
                     string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\photos\\" + nextId);
                     if (!Directory.Exists(folderPath))

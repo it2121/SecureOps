@@ -1,6 +1,9 @@
 ﻿@page "/incidents"
 @using Microsoft.EntityFrameworkCore
 @using MudBlazor
+@using MudBlazor.Extensions.Core
+@using MudBlazor.Extensions.Helper
+@using MudBlazor.Utilities
 @using SecureOps.Data
 @using SecureOps.Models
 @inject AppDbContext _context
@@ -10,6 +13,8 @@
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IDialogService DialogService
 @inject ISnackbar Snackbar
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
 <h3>Employee Incidents</h3>
 
 
@@ -41,6 +46,7 @@
             <MudSimpleTable   Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:500px;" : "")">
                 <thead >
                     <tr>
+                        <th>Id</th>
                         <th>Title</th>
                         <th>Status</th>
                         <th>ReportedAt</th>
@@ -50,6 +56,7 @@
                     @foreach (var incident in FilteredUsers)
                     {
                         <tr>
+                            <td>@incident.Id</td>
                             <td>@incident.Title</td>
                             <td>@incident.Status</td>
                             <td>@incident.ReportedAt.ToString()</td>
@@ -154,14 +161,45 @@
     private  async Task OpenDialogAsync( int incidentId)
     {
 
-        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+       // var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+        var options = new DialogOptionsEx
+            {
+                MaximizeButton = true,
+                CloseButton = true,
+                CloseOnEscapeKey = true,
+              BackdropClick=false,
+                MaxWidth = MaxWidth.Medium,
+                FullWidth = true,
+                Resizeable = true,
+                DragMode = MudDialogDragMode.SnapDrag,
+                DisableSizeMarginY = true,
+                DisablePositionMargin = true,
+
+            };
+
+
+        options.DialogAppearance = MudExAppearance.FromCss(MudExCss.Classes.Dialog.ColorfullGlass)
+            .WithStyle(b => b
+               
+                .WithBoxShadow($" 0 8px 32px 0 {new MudColor("#00897B").SetAlpha(0.2).ToString(MudColorOutputFormats.RGBA)}")
+                .WithBackgroundColor(new MudColor("#00897B").SetAlpha(1))
+            );
+        options.DialogBackgroundAppearance = MudExAppearance.FromCss(MudExCss.Classes.Backgrounds.MovingDots)
+            .WithStyle(new
+            {
+                Border = "4px solid",
+                BorderColor = Color.Secondary,
+                BorderRadius = 8
+            });
 
        // var options = new DialogOptions { CloseOnEscapeKey = true };
         var parameters = new DialogParameters
         {
-            { "IncidentId", incidentId }   // pass the variable
+            { "IncidentId", incidentId } ,
+            // pass the variable
         };
-        var dialog = await DialogService.ShowAsync<IncidentDialog>("Dialog", parameters,options);
+
+        var dialog = await DialogService.ShowExAsync<IncidentDialog>("Dialog", parameters, options);
 
         // Wait for dialog to close and get result
         var result = await dialog.Result;

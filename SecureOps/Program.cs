@@ -15,6 +15,7 @@ using SecureOps.Data.Seeds;
 using SecureOps.Services;
 using System.Text;
 using MudBlazor.Translations;
+using MudBlazor.Extensions;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -84,6 +85,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 .AddEntityFrameworkStores<AppDbContext>();
 
 
+builder.Services.AddMudServicesWithExtensions();
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
