@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SecureOps.Models;
+using SharpCompress.Common;
 using System.Reflection.Metadata;
 
 namespace SecureOps.Data
@@ -41,6 +42,26 @@ namespace SecureOps.Data
     .WithMany(e => e.Incidents)
     .HasForeignKey(i => i.EmployeeId)
     .OnDelete(DeleteBehavior.Cascade);
+
+
+            // One employee can upload many documents
+
+            modelBuilder.Entity<SDocument>()
+                .HasOne(d => d.UploadedBy)
+                .WithMany()
+                      .HasForeignKey(d => d.UploadedById)
+                      .OnDelete(DeleteBehavior.Restrict);
+
+
+
+            // Document → many acknowledgements
+            modelBuilder.Entity<SDocument>().HasMany(d => d.Acknowledgements)
+                  .WithOne(a => a.SDocument)
+                  .HasForeignKey(a => a.DocumentId);
+
+
         }
+
+       
     }
 }

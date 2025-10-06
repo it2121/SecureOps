@@ -1,15 +1,15 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace SecureOps.Models
+namespace SecureOps.Models.Dto
 {
-    public class SDocument
+    public class SDocumentDto
     {
         public int Id { get; set; }
 
-        [Required, MaxLength(200)]
+     
         public string Title { get; set; } = string.Empty;
 
-        [Required]
+       
         public string FilePath { get; set; } = string.Empty;
 
         // Original file details

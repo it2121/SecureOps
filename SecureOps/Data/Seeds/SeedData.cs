@@ -9,6 +9,19 @@ public static class SeedData
         if (context.Users.Any() || context.Employees.Any())
             return; // DB has been seeded
 
+
+        //context.EmployeeDocumentAcknowledgements.RemoveRange(context.EmployeeDocumentAcknowledgements);
+        //context.SDocuments.RemoveRange(context.SDocuments);
+        //context.Incidents.RemoveRange(context.Incidents);
+        //context.SafetyTasks.RemoveRange(context.SafetyTasks);
+        //context.Employees.RemoveRange(context.Employees);
+        //context.Users.RemoveRange(context.Users);
+        //context.Roles.RemoveRange(context.Roles);
+
+
+
+
+        context.SaveChanges();
         // 1. Seed roles
         var roles = new List<Role>
         {
@@ -70,6 +83,200 @@ public static class SeedData
             user.Roles.Add(role1);
             user.Roles.Add(role2);
         }
+
+        context.SaveChanges();
+
+        // 5. Seed SDocuments
+        var rnd = new Random();
+        var docs = new List<SDocument>
+        {
+            new SDocument
+            {
+                Title = "Safety Guidelines",
+                FilePath = "documents/safety_guidelines.pdf",
+                FileName = "safety_guidelines.pdf",
+                ContentType = "application/pdf",
+                FileSize = 120000,
+                UploadedAt = DateTime.UtcNow.AddDays(-10),
+                UpdatedAt = DateTime.UtcNow.AddDays(-5),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Safety",
+                Tags = "safety,manual,guidelines"
+            },
+            new SDocument
+            {
+                Title = "Employee Handbook",
+                FilePath = "documents/employee_handbook.pdf",
+                FileName = "employee_handbook.pdf",
+                ContentType = "application/pdf",
+                FileSize = 250000,
+                UploadedAt = DateTime.UtcNow.AddDays(-20),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = true,
+                Category = "HR",
+                Tags = "handbook,hr,policies"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            },
+            new SDocument
+            {
+                Title = "Incident Report Template",
+                FilePath = "documents/incident_report_template.docx",
+                FileName = "incident_report_template.docx",
+                ContentType = "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+                FileSize = 35000,
+                UploadedAt = DateTime.UtcNow.AddDays(-2),
+                UploadedById = employees[rnd.Next(employees.Count)].Id,
+                IsActive = true,
+                IsConfidential = false,
+                Category = "Forms",
+                Tags = "incident,report,template"
+            }
+        };
+
+        context.SDocuments.AddRange(docs);
+
 
         context.SaveChanges();
     }

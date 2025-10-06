@@ -1,6 +1,7 @@
 ﻿@using Microsoft.AspNetCore.Identity
 @using MudBlazor
 @using SecureOps.Data
+@using SecureOps.Models
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
 @inject HttpClient Http
@@ -36,6 +37,12 @@
         <MudNavLink Match="NavLinkMatch.All" Href="/profile" Icon="@Icons.Material.Filled.Face">profile</MudNavLink>
         <AuthorizeView>
             <MudNavLink Match="NavLinkMatch.All" Href="/Incidents" Icon="@Icons.Material.Filled.AddReaction">Incidents</MudNavLink>
+
+            @if (IsAuthorized)
+{
+            <MudNavLink Match="NavLinkMatch.All" Href="/SDocument" Icon="@Icons.Material.Filled.AddReaction">Document</MudNavLink>
+}
+        
         </AuthorizeView>
         <AuthorizeView>
     <NotAuthorized>
@@ -58,8 +65,10 @@
 
 @code {
 
+    private bool IsAuthorized { get; set; } = false;
 
-
+    private User currentUser;
+    private Employee currentEmp;
     [CascadingParameter(Name = "DarkMode")]
     public bool DarkMode { get; set; }
     bool _expanded = true;
@@ -68,7 +77,25 @@
     private bool _dense = false;
     private Breakpoint _breakpoint = Breakpoint.Lg;
     private DrawerClipMode _clipMode = DrawerClipMode.Never;
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
 
+      
+      
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            currentUser = JwtHelper.DecodeTokenToUser(token);
+
+            IsAuthorized = currentUser.Roles.Any(r =>
+                r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase) ||
+                r.RoleName.Equals("Tester", StringComparison.OrdinalIgnoreCase) ||
+                r.RoleName.Equals("Manager", StringComparison.OrdinalIgnoreCase) ||
+                r.RoleName.Equals("Employee", StringComparison.OrdinalIgnoreCase));
+        }
+
+    }
     private void ToggleDrawer()
     {
         _open = !_open;
