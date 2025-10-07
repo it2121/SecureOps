@@ -41,7 +41,7 @@
         }
         else
         {
-            <MudTextField @bind-Value="_searchString" Placeholder="Search Incedent..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
+            @* <MudTextField @bind-Value="_searchString" Placeholder="Search Incedent..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" />
 
             <MudSimpleTable   Items="FilteredUsers" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:500px;" : "")">
                 <thead >
@@ -71,22 +71,81 @@
 
                             </td>
                             <td>
-                            @*     <MudButton Color="Color.Error" FullWidth="true" Variant="Variant.Filled" Size="Size.Small" OnClick="@(() => DeleteIncident(incident.Id))">
-                                    Delete
-                                </MudButton> *@
-
+                     
                                 <MudButton Variant="Variant.Filled" FullWidth="true"  Color="Color.Error" OnClick="@(() => OnButtonClickedAsync(incident.Id))">Delete</MudButton>
 
                             </td>
-                            @* <td>
-                                <MudButton @onclick="@(() => OpenDialogAsync(incident.Id))" Variant="Variant.Filled" Color="Color.Primary">
-                                    Open simple dialog
-                                </MudButton>
-                            </td> *@
+                         
                         </tr>
                     }
                 </tbody>
-            </MudSimpleTable>
+            </MudSimpleTable> *@
+
+
+            <MudDataGrid ReadOnly="false"
+                         @ref="grid"
+                         T="Incident"
+                         MultiSelection="true"
+                         Items="@incidents"
+                         SortMode="SortMode.Multiple"
+                         QuickFilter="@_quickFilter"
+                         DragDropColumnReordering="true"
+                         ColumnsPanelReordering="true"
+                         Filterable="true" Groupable="true"
+                         ShowMenuIcon="true"
+                         Hideable="true" RowClick="@RowClicked"
+                         RowContextMenuClick="RowRightClicked"
+                         SelectedItemsChanged="@SelectedItemsChanged">
+                <ToolBarContent>
+                    <MudText Typo="Typo.h6"> SDocument</MudText>
+                    <MudSpacer />
+                    <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                  AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                </ToolBarContent>
+                <Columns>
+                    <SelectColumn T="Incident" />
+                    <PropertyColumn Property="x => x.Title" Title="Title" />
+                    <PropertyColumn Property="x => x.Status" />
+                    <PropertyColumn Property="x => x.Id" />
+                    <PropertyColumn Property="x => x.ReportedAt.ToString()" SortBy="@_sortBy" />
+                    @* <PropertyColumn Property="x => x.UpdatedAt" />  *@
+                    @* <PropertyColumn Property="x => x.UploadedBy != null ? x.UploadedBy.FullName : string.Empty" Title="Full Name" /> *@
+                    @* <PropertyColumn Property="x => x.IsActive" Title="IsActive" /> *@
+                    @* <PropertyColumn Property="x => x.IsConfidential" Title="IsConfidential" /> *@
+                    @* <PropertyColumn Property="x => x.Category" Title="Category" />
+                    <PropertyColumn Property="x => x.Tags" Title="Tags" /> *@
+
+                    <!-- Action Button Column -->
+                    <TemplateColumn Title="Actions" CellClass="d-flex justify-center">
+                        <CellTemplate>
+                            <MudStack Row="true" Spacing="3" T="string" Class="d-flex flex-wrap" >
+                            <MudButton Color="Color.Primary"
+                                       Variant="Variant.Filled"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await OpenDialogAsync(context.Item.Id))">
+                                View
+                            </MudButton>
+
+                            <MudButton Color="Color.Error"
+                                       Variant="Variant.Filled"
+                                       Size="Size.Small"
+                                       OnClick="@(async () => await OnButtonClickedAsync(context.Item.Id))">
+                                Delete
+                            </MudButton>
+
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+
+
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="Incident" />
+                </PagerContent>
+            </MudDataGrid>
+
+
+
         }
     }
 
@@ -96,6 +155,8 @@
 
 
 </MudPaper>
+
+
 
 <MudMessageBox @ref="_mudMessageBox" Title="Warning" CancelText="Cancel">
     <MessageContent>
@@ -108,6 +169,90 @@
 
 
 @code {
+
+    private async Task OnActionButtonClicked(int documentId)
+    {
+        Console.WriteLine($"Document ID clicked: {documentId}");
+
+        // Example: navigate to a detail page
+        // NavManager.NavigateTo($"/SDocumentDetail/{documentId}");
+
+        // Or call your API
+        // var result = await Http.GetFromJsonAsync<SDocumentDto>($"api/SDocument/{documentId}");
+    }
+
+
+    public MudDataGrid<Incident> grid = null;
+
+    private async Task HideColumnsAsync(bool hide)
+    {
+        foreach (var column in grid.RenderedColumns)
+        {
+            if (hide)
+            {
+                await column.HideAsync();
+            }
+            else
+            {
+                await column.ShowAsync();
+            }
+        }
+        ;
+    }
+    //private IEnumerable<Incident> incidents = new List<Incident>();
+    // private List<SDocumentDto> sdocumentDto;
+    private string _searchString;
+    private bool _sortNameByLength;
+    private List<string> _events = new();
+    // custom sort by name length
+    private Func<Incident, object> _sortBy => x =>
+    {
+        if (_sortNameByLength)
+            return x.Title.Length;
+        else
+            return x.Employee.FullName;
+    };
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<Incident, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        // if (x.Employee.FullName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        //     return true;
+
+
+
+        return false;
+    };
+
+
+    // events
+    void RowClicked(DataGridRowClickEventArgs<Incident> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+
+
+
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<Incident> args)
+    {
+        _events.Insert(0, $"Event = RowRightClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void SelectedItemsChanged(HashSet<Incident> items)
+    {
+        _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
+    }
+
+
+
     private MudMessageBox _mudMessageBox;
     private bool _state =false;
 
@@ -237,7 +382,7 @@
 
 
     private string _colorValue;
-    private string _searchString = "";
+   // private string _searchString = "";
     public int EmployeeId { get; set; }
 
     private Employee employee;
@@ -245,13 +390,13 @@
 
 
 
-    private IEnumerable<Incident> FilteredUsers =>
-            string.IsNullOrWhiteSpace(_searchString)
-                ? incidents
-                : incidents.Where(u =>
-                    (u.Status?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (u.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                    (u.ReportedAt.ToString()?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
+    // private IEnumerable<Incident> FilteredUsers =>
+    //         string.IsNullOrWhiteSpace(_searchString)
+    //             ? incidents
+    //             : incidents.Where(u =>
+    //                 (u.Status?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+    //                 (u.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+    //                 (u.ReportedAt.ToString()?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
 
 
 

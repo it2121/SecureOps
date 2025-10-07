@@ -22,45 +22,7 @@ else if (!sdocumentDto.Any())
 }
 else
 {
-    @* <MudTextField @bind-Value="_searchString" Placeholder="Search users..." Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" Class="mb-3" /> *@
-
-    @* <MudSimpleTable Items="Filtereddocuments" Hover="true" Dense="true" FixedHeader="true" Style="@(true ? "height:500px;" : "")">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Uploaded By</th>
-                <th>Title</th>
-                <th>File Size (bytes)</th>
-                <th>Uploaded At</th>
-                <th>Updated At</th>
-                <th>Uploaded By (Employee Id)</th>
-                <th>Is Active</th>
-                <th>Is Confidential</th>
-                <th>Category</th>
-                <th>Tags</th>
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var doc in Filtereddocuments)
-            {
-                <tr>
-                    <td>@doc.Id</td>
-                                <td>@doc.UploadedBy?.FullName</td> <!-- 👈 show employee name -->
-
-
-                    <td>@doc.Title</td>
-                    <td>@doc.FileSize</td>
-                    <td>@doc.UploadedAt.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@doc.UpdatedAt?.ToString("yyyy-MM-dd HH:mm")</td>
-                    <td>@doc.UploadedById</td>
-                    <td>@doc.IsActive</td>
-                    <td>@doc.IsConfidential</td>
-                    <td>@doc.Category</td>
-                    <td>@doc.Tags</td>
-                </tr>
-            }
-        </tbody>
-    </MudSimpleTable> *@
+ 
 
 
     <MudDataGrid  ReadOnly="false"  
