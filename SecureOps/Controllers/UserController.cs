@@ -29,22 +29,54 @@ namespace SecureOps.Controllers
             _passwordHasher = new PasswordHasher<User>();
 
         }
+        [HttpGet("GetUser/{userId}")]
+        public async Task<IActionResult> GetUser(int userId)
+        {
+            var user = await _db.Users
+                .Where(u => u.Id == userId)
+                .Select(u => new UserDto
+                {
+                    Id = u.Id,
+                    Email = u.Email,
+                    FullName = u.FullName,
+                    Username = u.Username,
+                    Roles = u.Roles
+                })
+                .FirstOrDefaultAsync();
 
+            if (user == null)
+                return NotFound();
 
+            return Ok(user);
+        }
+
+        [HttpGet("GetAllRoles")]
+        public async Task<IActionResult> GetAllRoles()
+        {
+            var roles = await _db.Roles
+               
+                .ToListAsync();
+
+            return Ok(roles);
+        }
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
             var users = await _db.Users
                 .Select(u => new UserDto
                 {
+                    Id = u.Id,
                     Email = u.Email,
                     FullName = u.FullName,
-                    Username = u.Username
+                    Username = u.Username,
+                    Roles = u.Roles
                 })
                 .ToListAsync();
 
             return Ok(users);
         }
+
+
         [Authorize(Roles = "Admin")]
         [HttpGet("GetNameFromEmail")]
         public async Task<IActionResult> GetNameFromEmail([FromQuery] string email)
@@ -67,6 +99,57 @@ namespace SecureOps.Controllers
 
             return Ok(dto);
         }
+
+
+     
+        [HttpPost("AddRoleToUser/{userId}/{roleId}")]
+        public async Task<IActionResult> AddRoleToUser(int userId, int roleId)
+        {
+            var user = await _db.Users
+                .Include(u => u.Roles) // Load roles for this user
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound($"User with ID {userId} not found.");
+
+            var role = await _db.Roles.FirstOrDefaultAsync(r => r.RoleId == roleId);
+            if (role == null)
+                return NotFound($"Role with ID {roleId} not found.");
+
+            // Prevent duplicates
+            if (user.Roles.Any(r => r.RoleId == roleId))
+                return BadRequest($"User already has role {roleId}.");
+
+            user.Roles.Add(role);
+            await _db.SaveChangesAsync();
+
+            return Ok(new { Message = $"Role {roleId} added to User {userId}." });
+        }
+        [HttpGet("RemoveRoleFromUser/{userId}/{RoleID}")]
+        public async Task<IActionResult> RemoveRoleFromUser(int userId, int roleId)
+        {
+
+            var user = await _db.Users
+    .Include(u => u.Roles) // Make sure roles are loaded
+    .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound($"User with ID {userId} not found.");
+
+            var role = user.Roles.FirstOrDefault(r => r.RoleId == roleId);
+            if (role == null)
+                return NotFound($"Role with ID {roleId} not found for this user.");
+
+            // Remove the role
+            user.Roles.Remove(role);
+            await _db.SaveChangesAsync();
+
+            return Ok(new { Message = $"Role {roleId} removed from User {userId}." });
+
+        }
+
+
+
 
 
         [HttpPost("RegisterUser")]

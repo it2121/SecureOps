@@ -1,5 +1,298 @@
-﻿<h3>UserManagment</h3>
+﻿@page "/UserManagment"
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using MudBlazor.Utilities
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@using System.Net.Http.Json
+@inject HttpClient httpClient
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@using MudBlazor.Extensions.Core
+@using MudBlazor.Extensions.Helper
+@using MudBlazor.Utilities
+@using SecureOps.Data
+@using SecureOps.Models
+@inject AppDbContext _context
+@inject NavigationManager NavManager
+@inject NavigationManager NavManager
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+<h3> User Managment </h3>
 
+
+@if (userDto == null)
+{
+    <p>Loading Data...</p>
+}
+else if (!userDto.Any())
+{
+    <p>No Data found.</p>
+}
+else
+{
+
+
+
+    <MudDataGrid ReadOnly="false"
+                 @ref="grid"
+                 T="UserDto"
+                 MultiSelection="true"
+                 Items="@userDto"
+                 SortMode="SortMode.Multiple"
+                 QuickFilter="@_quickFilter"
+                 DragDropColumnReordering="true"
+                 ColumnsPanelReordering="true"
+                 Filterable="true" Groupable="true"
+                 ShowMenuIcon="true"
+                 Hideable="true" RowClick="@RowClicked"
+                 RowContextMenuClick="RowRightClicked"
+                 SelectedItemsChanged="@SelectedItemsChanged">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6"> Users </MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <SelectColumn T="UserDto" />
+            <PropertyColumn Property="x => x.FullName" Title="Title" />
+            <PropertyColumn Property="x => x.Username" Title="Username" />
+            <PropertyColumn Property="x => x.Email" Title="Email" />
+    
+            @* <PropertyColumn Property="x => x.UploadedAt" SortBy="@_sortBy" /> *@
+            @* <PropertyColumn Property="x => x.UpdatedAt" />  *@
+            @* <PropertyColumn Property="x => x.UploadedBy != null ? x.UploadedBy.FullName : string.Empty" Title="Full Name" /> *@
+            @* <PropertyColumn Property="x => x.IsActive" Title="IsActive" /> *@
+            @* <PropertyColumn Property="x => x.IsConfidential" Title="IsConfidential" /> *@
+            @* <PropertyColumn Property="x => x.Category" Title="Category" />
+            <PropertyColumn Property="x => x.Tags" Title="Tags" /> *@
+            <TemplateColumn Title="Roles">
+                <CellTemplate>
+                    @foreach (var role in context.Item.Roles)
+                    {
+                        <MudChip   Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Info" Class="m-1">
+                            @role.RoleName
+                           
+                        </MudChip>
+                    }
+                </CellTemplate>
+            </TemplateColumn>
+
+            <!-- Action Button Column -->
+            <TemplateColumn Title="Actions" CellClass="">
+                <CellTemplate>
+                    <MudButton Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               Size="Size.Small"
+                               OnClick="@(async () => await OpenDialogAsync(context.Item.Id))">
+                  
+                                 
+                          
+
+
+
+                        View
+                    </MudButton>
+                </CellTemplate>
+            </TemplateColumn>
+
+
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="UserDto" />
+        </PagerContent>
+    </MudDataGrid>
+
+}
 @code {
+
+
+    private async Task OpenDialogAsync(int userId)
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var parameters = new DialogParameters
+        {
+            { "UserId", userId } ,
+            // pass the variable
+        };
+
+        var dialog = await DialogService.ShowAsync<UserRolesManagmentDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            userDto = await Http.GetFromJsonAsync<List<UserDto>>(NavManager.BaseUri + $"api/Users/GetAll");
+
+
+
+
+
+
+            var returnedValue = result.Data;
+
+            if (userId == 0)
+            {
+                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+
+            }
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+
+    private async Task OnActionButtonClicked(int userId)
+    {
+        Console.WriteLine($"Document ID clicked: {userId}");
+
+        // Example: navigate to a detail page
+        // NavManager.NavigateTo($"/SDocumentDetail/{documentId}");
+
+        // Or call your API
+        // var result = await Http.GetFromJsonAsync<SDocumentDto>($"api/SDocument/{documentId}");
+    }
+
+
+    public MudDataGrid<UserDto> grid = null;
+
+    private async Task HideColumnsAsync(bool hide)
+    {
+        foreach (var column in grid.RenderedColumns)
+        {
+            if (hide)
+            {
+                await column.HideAsync();
+            }
+            else
+            {
+                await column.ShowAsync();
+            }
+        }
+        ;
+    }
+
+
+    private IEnumerable<UserDto> userDto = new List<UserDto>();
+    // private List<SDocumentDto> sdocumentDto;
+    private string _searchString;
+    private bool _sortNameByLength;
+    private List<string> _events = new();
+    // custom sort by name length
+    private Func<UserDto, object> _sortBy => x =>
+    {
+        if (_sortNameByLength)
+            return x.FullName.Length;
+        else
+            return x.Username;
+    };
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<UserDto, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.FullName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Username.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        // if (x.Roles.ro.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        //     return true;
+
+        if (x.Email?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) == true)
+            return true;
+
+        // check roles
+        if (x.Roles != null && x.Roles.Any(r =>
+            r.RoleName.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+            return true;
+
+        return false;
+    };
+
+
+    // events
+    void RowClicked(DataGridRowClickEventArgs<UserDto> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+
+
+
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<UserDto> args)
+    {
+        _events.Insert(0, $"Event = RowRightClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void SelectedItemsChanged(HashSet<UserDto> items)
+    {
+        _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
+    }
+
+
+
+
+    // private List<User> user;
+    private string _colorValue;
+    private Employee employee;
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            employee = JwtHelper.DecodeTokenToEmployee(token);
+            User? currentUser = JwtHelper.DecodeTokenToUser(token);
+
+
+
+
+
+
+
+            if (currentUser.Roles.Any(r =>
+               r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+            {
+                userDto = await Http.GetFromJsonAsync<List<UserDto>>(NavManager.BaseUri + $"api/Users/GetAll");
+
+            }
+            else
+            {
+                userDto = null;
+            }
+        }
+
+
+
+    }
+    private IEnumerable<UserDto> Filtereddocuments =>
+            string.IsNullOrWhiteSpace(_searchString)
+                ? userDto
+                : userDto.Where(u =>
+                    (u.FullName?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.Username?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.Email?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
+
+
 
 }

@@ -1,0 +1,307 @@
+﻿@using MudBlazor
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Text.Json
+@using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog Class="custom-dialog blur dialog-background"
+           TitleClass="blur dialog-background-title"
+           ContentClass="dialog-background-surface py-10"
+           ActionsClass="dialog-background-surface">
+
+    <TitleContent>
+        <MudText Typo="Typo.h5">User</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Class="mt-4">
+            <MudStack Spacing="3">
+                <MudPaper Class="pa-4  dialog-background-container">
+                    <MudTextField @bind-Value="userDto.FullName" Label="Name"
+                                  ReadOnly  />
+            
+                <MudDivider />
+               <MudStack Direction="Row" Spacing="1" Class="mt-2 flex-wrap">
+        @foreach (var role in roles)
+        {
+            <MudChip T="Role" Color="Color.Primary" Variant="Variant.Outlined" Class="m-1" 
+                     OnCloseClick="@(async () => await OnRemoveRoleClicked(role))"
+                     CloseIcon="@Icons.Material.Filled.Close">
+                @role.RoleName
+            </MudChip>
+
+
+           
+
+        }
+    </MudStack>
+                    <MudAutocomplete T="Role" Label="Periodic Table Element" @bind-Value="AutoRole"
+                                     SearchFunc="@Search" ToStringFunc="@(e=> e==null?null : $"{e.RoleName} ({e.RoleId}")" />
+
+
+                    <MudAutocomplete T="Role"
+                                     TValue="Role"
+                                     @bind-Value="selectedRole"
+                                     ToStringFunc="r => r?.RoleName"
+                                     Label="Add Role"
+                                     Placeholder="Select a role..."
+                                     Dense="true"
+                                     Clearable="true"
+                                     Items="availableRoles"
+                                     OnValueChanged="AddRole">
+                    </MudAutocomplete>
+              
+        </MudPaper>
+        
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+    
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+            Done
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+
+<style>
+    .custom-dialog {
+        width: 1300px !important;
+        max-width: 90vw;
+    }
+
+    .blur {
+        backdrop-filter: blur(10px);
+    }
+
+    .dialog-background {
+        background-color: transparent;
+    }
+
+    .dialog-background-title {
+        background: rgb(from var(--mud-palette-info-lighten) r g b / 50%);
+        color: var(--mud-palette-white);
+    }
+
+    .dialog-background-surface {
+        background: rgb(from var(--mud-palette-surface) r g b / 45%);
+    }
+
+    .dialog-background-container {
+        background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
+</style>
+
+@code {
+    private async Task<IEnumerable<Role>> Search(string value, CancellationToken token)
+    {
+        return await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Users/GetAllRoles");
+    }
+    private Role selectedRole;
+    private List<Role> allRoles = new();
+    Role AutoRole;
+    private List<Role> roles = new List<Role>();
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
+
+
+
+
+    private async Task ConfirmDelete(string imageUrl)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+
+
+
+
+
+        if (result != null)
+        {
+            // await DeleteImageAsync(imageUrl);
+        }
+    }
+
+
+    private void AddRole(Role role)
+    {
+        if (role != null && !roles.Any(r => r.RoleId == role.RoleId))
+        {
+            roles.Add(role);
+            selectedRole = null;
+            StateHasChanged();
+        }
+    }
+
+    private void RemoveRole(Role role)
+    {
+        if (roles.Contains(role))
+        {
+            roles.Remove(role);
+            StateHasChanged();
+        }
+    }
+
+    private async Task OnButtonClickedAsync(Role role)
+    {
+        bool? result = await _mudMessageBox.ShowAsync();
+        _state = result is null ? false : true;
+
+        if (_state)
+        {
+
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Users/RemoveRoleFromUser?UserId={UserId}&RoleID={role.RoleId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var roleToRemove = roles.FirstOrDefault(r => r.RoleId == role.RoleId);
+                if (roleToRemove != null)
+                {
+                    roles.Remove(roleToRemove);
+                }
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+            }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
+
+        }
+        StateHasChanged();
+    }
+
+
+
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int UserId { get; set; }
+
+    private Employee employee;
+    private MudForm form;
+    private UserDto userDto = new UserDto();
+
+    private async void Submit()
+    {
+        await SaveIncident();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        if (UserId != 0)
+        {
+            UserDto tempUserDto = await Http.GetFromJsonAsync<UserDto>(NavManager.BaseUri + $"api/Users/GetUser/{UserId}");
+            userDto = tempUserDto;
+            roles = userDto.Roles.ToList();
+                   allRoles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri +$"api/Users/GetAllRoles");
+
+        }
+        else
+        {
+            //incident.Id = await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetNextIncidentID");
+        }
+    }
+
+    private Task<IEnumerable<Role>> SearchRolesAsync(string value)
+    {
+        var availableRoles = allRoles
+            .Where(r => !roles.Any(ur => ur.RoleId == r.RoleId));
+
+        if (!string.IsNullOrWhiteSpace(value))
+            availableRoles = availableRoles
+                .Where(r => r.RoleName.Contains(value, StringComparison.OrdinalIgnoreCase));
+
+        return Task.FromResult(availableRoles.AsEnumerable());
+    }
+private async Task OnRemoveRoleClicked(Role role)
+{
+    var response = await Http.DeleteAsync(NavManager.BaseUri +$"api/Users/RemoveRoleFromUser/{UserId}/{role.RoleId}");
+    if (response.IsSuccessStatusCode)
+    {
+        roles.Remove(role);
+        StateHasChanged();
+        Snackbar.Add($"Role {role.RoleName} removed", Severity.Success);
+    }
+}
+private void OnRoleSelected(Role role)
+{
+    if (role != null && !roles.Any(r => r.RoleId == role.RoleId))
+    {
+        roles.Add(role);
+        selectedRole = null; // reset autocomplete
+        StateHasChanged();
+    }
+}
+    private async Task SaveIncident()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        // userDto.EmployeeId = EmployeeId;
+        // if (incident.ReportedAt == default)
+        //     incident.ReportedAt = DateTime.Now;
+
+        // IncidentWithEmpDto dto = new IncidentWithEmpDto
+        // {
+        //     Description = incident.Description,
+        //     ReportedAt = incident.ReportedAt,
+        //     Title = incident.Title,
+        //     Status = incident.Status,
+        //     EmpId = incident.EmployeeId,
+        //     PhotoPath = incident.PhotoPath,
+        //     Id = incident.Id
+        // };
+
+        bool okay = true;
+        if (roles.Count() != 0)
+        {
+
+            bool first = true;
+            foreach (var role in roles)
+            {
+                using var content = new MultipartFormDataContent();
+
+        
+
+                var response = await Http.PostAsync(NavManager.BaseUri + $"api/Users/AddRoleToUser?userId={UserId}&roleId={role.RoleId}", null);
+
+                if (response.IsSuccessStatusCode)
+                {
+                
+
+                }
+
+                if (!response.IsSuccessStatusCode)
+                {
+                    okay = false;
+                }
+            }
+        }
+      
+
+        if (okay)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+}

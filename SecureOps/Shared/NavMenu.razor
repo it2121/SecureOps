@@ -41,6 +41,7 @@
             @if (IsAuthorized)
 {
             <MudNavLink Match="NavLinkMatch.All" Href="/SDocument" Icon="@Icons.Material.Filled.AddReaction">Document</MudNavLink>
+                <MudNavLink Match="NavLinkMatch.All" Href="/UserManagment" Icon="@Icons.Material.Filled.VerifiedUser">User Managment</MudNavLink>
 }
         
         </AuthorizeView>
@@ -60,12 +61,12 @@
     </MudDrawer>
 
 
-@* 
- *@
+
 
 @code {
 
     private bool IsAuthorized { get; set; } = false;
+    private bool IsAdmin { get; set; } = false;
 
     private User currentUser;
     private Employee currentEmp;
@@ -93,6 +94,9 @@
                 r.RoleName.Equals("Tester", StringComparison.OrdinalIgnoreCase) ||
                 r.RoleName.Equals("Manager", StringComparison.OrdinalIgnoreCase) ||
                 r.RoleName.Equals("Employee", StringComparison.OrdinalIgnoreCase));
+
+            IsAdmin = currentUser.Roles.Any(r =>
+                r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase));
         }
 
     }
