@@ -5,6 +5,7 @@ using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
 using SecureOps.Models;
 using SecureOps.Models.Dto;
+using SecureOps.Pages;
 
 
 namespace SecureOps.Controllers
@@ -28,6 +29,31 @@ namespace SecureOps.Controllers
             _userManager = userManager;
             _passwordHasher = new PasswordHasher<User>();
 
+        }
+        [HttpGet("GetNotUserRoles/{userId}")]
+        public async Task<IActionResult> GetNotUserRoles(int userId)
+        {
+            // Load user with UserRoles and Roles
+            var user = await _db.Users
+                .Include(u => u.Roles)               
+                
+                .FirstOrDefaultAsync(u => u.Id == userId);
+
+            if (user == null)
+                return NotFound();
+
+            // Get all roles
+            var allRoles = await _db.Roles.ToListAsync();
+
+            // Get role IDs the user already has
+            var userRoleIds = user.Roles.Select(ur => ur.RoleId).ToList();
+
+            // Exclude those roles
+            var notUserRoles = allRoles
+                .Where(r => !userRoleIds.Contains(r.RoleId))
+                .ToList();
+
+            return Ok(notUserRoles);
         }
         [HttpGet("GetUser/{userId}")]
         public async Task<IActionResult> GetUser(int userId)
@@ -125,7 +151,7 @@ namespace SecureOps.Controllers
 
             return Ok(new { Message = $"Role {roleId} added to User {userId}." });
         }
-        [HttpGet("RemoveRoleFromUser/{userId}/{RoleID}")]
+        [HttpDelete("RemoveRoleFromUser/{userId}/{roleId}")]
         public async Task<IActionResult> RemoveRoleFromUser(int userId, int roleId)
         {
 

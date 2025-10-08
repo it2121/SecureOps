@@ -28,36 +28,50 @@
                                   ReadOnly  />
             
                 <MudDivider />
-               <MudStack Direction="Row" Spacing="1" Class="mt-2 flex-wrap">
+                    <MudStack Row="true" Spacing="1" Class="mt-2 flex-wrap">
         @foreach (var role in roles)
         {
-            <MudChip T="Role" Color="Color.Primary" Variant="Variant.Outlined" Class="m-1" 
-                     OnCloseClick="@(async () => await OnRemoveRoleClicked(role))"
-                     CloseIcon="@Icons.Material.Filled.Close">
+                            <MudChip T="Role" Color="Color.Primary" Variant="Variant.Filled" Class="m-1"
+                                     OnClose="@(async () => await OnRemoveRoleClicked(role))"
+                     CloseIcon="@Icons.Material.Filled.Close"
+                                    >
                 @role.RoleName
             </MudChip>
-
-
-           
-
         }
+                        @foreach (var role in NewAddedRoles)
+                        {
+                            <MudChip T="Role" Color="Color.Warning" Variant="Variant.Filled" Class="m-1"
+                                     OnClose="@(async () => await OnRemoveNewRoleClicked(role))"
+                                     CloseIcon="@Icons.Material.Filled.Close" >
+                                @role.RoleName
+                            </MudChip>
+                        }
+
     </MudStack>
-                    <MudAutocomplete T="Role" Label="Periodic Table Element" @bind-Value="AutoRole"
-                                     SearchFunc="@Search" ToStringFunc="@(e=> e==null?null : $"{e.RoleName} ({e.RoleId}")" />
+                </MudPaper>
+                <MudPaper Class="pa-4  dialog-background-container">
 
+    <MudGrid>
+                    <MudItem xs="10">
 
-                    <MudAutocomplete T="Role"
-                                     TValue="Role"
-                                     @bind-Value="selectedRole"
-                                     ToStringFunc="r => r?.RoleName"
-                                     Label="Add Role"
-                                     Placeholder="Select a role..."
-                                     Dense="true"
-                                     Clearable="true"
-                                     Items="availableRoles"
-                                     OnValueChanged="AddRole">
-                    </MudAutocomplete>
-              
+                            <MudAutocomplete T="Role" Label="Roles" @bind-Value="AutoRole" SearchFunc="@Search1"
+                                             ResetValueOnEmptyText="true"
+                                             CoerceText="true" CoerceValue="true" SelectValueOnTab="true"
+                                             ToStringFunc="@(e=> e==null?null : $"{e.RoleName} ")" />
+
+                   
+
+                                                         </MudItem>
+
+ <MudItem xs="2">
+
+                    <MudButton FullWidth=true Variant="Variant.Filled" Color="Color.Primary" OnClick="AddRole">
+                        Add
+                    </MudButton>
+                        </MudItem>
+
+                    </MudGrid>
+
         </MudPaper>
         
             </MudStack>
@@ -106,17 +120,64 @@
 </style>
 
 @code {
-    private async Task<IEnumerable<Role>> Search(string value, CancellationToken token)
+    private bool coerceText;
+    private bool coerceValue;
+
+    void RemoveOldChip(MudChip<Role> chip)
     {
-        return await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Users/GetAllRoles");
+
+
+
+    }
+
+    void RemoveNewChip(MudChip<Role> chip)
+    {
+
+  
+
+    }
+
+    private async Task<IEnumerable<Role>> Search1(string value, CancellationToken token)
+    {
+        // return await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Users/GetAllRoles");
+        var roles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Users/GetNotUserRoles/{UserId}");
+
+        if (string.IsNullOrWhiteSpace(value))
+            return roles; // if nothing typed, return all
+
+        // Filter by RoleName (case-insensitive)
+        return roles.Where(r => r.RoleName.Contains(value, StringComparison.OrdinalIgnoreCase));
+
     }
     private Role selectedRole;
     private List<Role> allRoles = new();
     Role AutoRole;
     private List<Role> roles = new List<Role>();
+    private List<Role> NewAddedRoles = new List<Role>();
     private MudMessageBox _mudMessageBox;
     private bool _state = false;
 
+
+
+
+    private async Task AddRole()
+    {
+        Role selectedRole = AutoRole;
+
+
+
+        if (!NewAddedRoles.Any(r => r.RoleId == selectedRole.RoleId))
+        {
+            NewAddedRoles.Add(selectedRole);
+        }
+
+
+
+        AutoRole = null;
+
+        StateHasChanged();
+
+    }
 
 
 
@@ -198,7 +259,7 @@
 
     private async void Submit()
     {
-        await SaveIncident();
+        await SaveRoles();
     }
 
     private void Cancel() => MudDialog.Cancel();
@@ -212,7 +273,7 @@
             UserDto tempUserDto = await Http.GetFromJsonAsync<UserDto>(NavManager.BaseUri + $"api/Users/GetUser/{UserId}");
             userDto = tempUserDto;
             roles = userDto.Roles.ToList();
-                   allRoles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri +$"api/Users/GetAllRoles");
+            allRoles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Users/GetNotUserRoles/{UserId}");
 
         }
         else
@@ -232,9 +293,16 @@
 
         return Task.FromResult(availableRoles.AsEnumerable());
     }
+    private async Task OnRemoveNewRoleClicked(Role role)
+    {
+        NewAddedRoles.Remove(role);
+        StateHasChanged();
+        Snackbar.Add($"Role {role.RoleName} removed", Severity.Success);
+    
+}
 private async Task OnRemoveRoleClicked(Role role)
 {
-    var response = await Http.DeleteAsync(NavManager.BaseUri +$"api/Users/RemoveRoleFromUser/{UserId}/{role.RoleId}");
+        var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Users/RemoveRoleFromUser/{UserId}/{role.RoleId}");
     if (response.IsSuccessStatusCode)
     {
         roles.Remove(role);
@@ -251,39 +319,25 @@ private void OnRoleSelected(Role role)
         StateHasChanged();
     }
 }
-    private async Task SaveIncident()
+    private async Task SaveRoles()
     {
         await form.Validate();
         if (!form.IsValid)
             return;
 
-        // userDto.EmployeeId = EmployeeId;
-        // if (incident.ReportedAt == default)
-        //     incident.ReportedAt = DateTime.Now;
-
-        // IncidentWithEmpDto dto = new IncidentWithEmpDto
-        // {
-        //     Description = incident.Description,
-        //     ReportedAt = incident.ReportedAt,
-        //     Title = incident.Title,
-        //     Status = incident.Status,
-        //     EmpId = incident.EmployeeId,
-        //     PhotoPath = incident.PhotoPath,
-        //     Id = incident.Id
-        // };
-
+  
         bool okay = true;
-        if (roles.Count() != 0)
+        if (NewAddedRoles.Count() != 0)
         {
 
             bool first = true;
-            foreach (var role in roles)
+            foreach (var role in NewAddedRoles)
             {
                 using var content = new MultipartFormDataContent();
 
         
 
-                var response = await Http.PostAsync(NavManager.BaseUri + $"api/Users/AddRoleToUser?userId={UserId}&roleId={role.RoleId}", null);
+                var response = await Http.PostAsync(NavManager.BaseUri + $"api/Users/AddRoleToUser/{UserId}/{role.RoleId}", null);
 
                 if (response.IsSuccessStatusCode)
                 {
