@@ -1,0 +1,367 @@
+﻿@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Text.Json
+@using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+
+<MudDialog Class="custom-dialog blur dialog-background"
+           TitleClass="blur dialog-background-title"
+           ContentClass="dialog-background-surface py-10"
+           ActionsClass="dialog-background-surface">
+    <TitleContent>
+        <MudText Typo="Typo.h5">Models.Pages</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Class="mt-4">
+            @if (pages == null)
+            {
+                <MudText Typo="Typo.body1">Loading...</MudText>
+            }
+            else
+            {
+                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+                    <MudText Typo="Typo.h5">Models.Pages Managment</MudText>
+                    <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenDialogAsync(0))">
+                        + New Page
+                    </MudButton>
+                </MudStack>
+
+
+                @if (pages == null || !pages.Any())
+                {
+                    <MudText Typo="Typo.body1">No Models.Pages found.</MudText>
+                }
+                else
+                {
+
+
+                    <MudDataGrid ReadOnly="false"
+                                 @ref="grid"
+                                 T="Models.Page"
+                                 MultiSelection="true"
+                                 Items="@pages"
+                                 SortMode="SortMode.Multiple"
+                                 QuickFilter="@_quickFilter"
+                                 DragDropColumnReordering="true"
+                                 ColumnsPanelReordering="true"
+                                 Filterable="true" Groupable="true"
+                                 ShowMenuIcon="true"
+                                 Hideable="true" RowClick="@RowClicked"
+                                 RowContextMenuClick="RowRightClicked"
+                                 SelectedItemsChanged="@SelectedItemsChanged">
+                        <ToolBarContent>
+                            <MudText Typo="Typo.h6"> Models.Pages</MudText>
+                            <MudSpacer />
+                            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+                        </ToolBarContent>
+                        <Columns>
+                            <SelectColumn T="Models.Page" />
+                            <PropertyColumn Property="x => x.PageName" Title="PageName" />
+                  
+
+
+
+                            <!-- Action Button Column -->
+                            <TemplateColumn Title="Actions" CellClass="d-flex justify-center">
+                                <CellTemplate>
+                                    <MudStack Row="true" Spacing="3" T="string" Class="d-flex flex-wrap">
+                                        <MudButton Color="Color.Primary"
+                                                   Variant="Variant.Filled"
+                                                   Size="Size.Small"
+                                                   OnClick="@(async () => await OpenDialogAsync(context.Item.PageId))">
+                                            View
+                                        </MudButton>
+
+                                        <MudButton Color="Color.Error"
+                                                   Variant="Variant.Filled"
+                                                   Size="Size.Small"
+                                                   OnClick="@(async () => await OpenDeleteDialogAsync(context.Item.PageId))">
+                                            @* OnClick="@(async () => await OnButtonClickedAsync(context.Item.RoleId))"> *@
+                                            Delete
+                                        </MudButton>
+
+                                    </MudStack>
+                                </CellTemplate>
+                            </TemplateColumn>
+
+
+                        </Columns>
+                        <PagerContent>
+                            <MudDataGridPager T="Models.Page" />
+                        </PagerContent>
+                    </MudDataGrid>
+
+
+
+                }
+            }
+
+        </MudForm>
+    </DialogContent>
+
+
+
+</MudDialog>
+
+
+
+
+
+
+<style>
+    .custom-dialog {
+        width: 1300px !important;
+        max-width: 90vw;
+    }
+
+    .blur {
+        backdrop-filter: blur(10px);
+    }
+
+    .dialog-background {
+        background-color: transparent;
+    }
+
+    .dialog-background-title {
+        background: rgb(from var(--mud-palette-info-lighten) r g b / 50%);
+        color: var(--mud-palette-white);
+    }
+
+    .dialog-background-surface {
+        background: rgb(from var(--mud-palette-surface) r g b / 45%);
+    }
+
+    .dialog-background-container {
+        background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
+</style>
+
+
+
+
+
+@code {
+
+
+    private MudForm form;
+    public MudDataGrid<Models.Page> grid = null;
+
+    private async Task HideColumnsAsync(bool hide)
+    {
+        foreach (var column in grid.RenderedColumns)
+        {
+            if (hide)
+            {
+                await column.HideAsync();
+            }
+            else
+            {
+                await column.ShowAsync();
+            }
+        }
+        ;
+    }
+
+    private string _searchString;
+    private bool _sortNameByLength;
+    private List<string> _events = new();
+    private Func<Models.Page, object> _sortBy => x =>
+    {
+        if (_sortNameByLength)
+            return x.PageName.Length;
+        else return x.PageName.Length;
+
+
+    };
+    private Func<Models.Page, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.PageName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+
+
+
+        return false;
+    };
+
+
+    // events
+    void RowClicked(DataGridRowClickEventArgs<Models.Page> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+
+
+
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<Models.Page> args)
+    {
+        _events.Insert(0, $"Event = RowRightClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void SelectedItemsChanged(HashSet<Models.Page> items)
+    {
+        _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
+    }
+
+
+
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
+    private readonly DialogOptions _maxWidth = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+
+    private async Task OpenDeleteDialogAsync(int pageId)
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+    
+        var dialog = await DialogService.ShowAsync<DeleteConfirmDialog>("Dialog", options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            // roles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Role/GetAll")
+            //  ?? new List<Role>();
+
+
+
+
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Page/{pageId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var ToRemove = pages.FirstOrDefault(i => i.PageId == pageId);
+                if (ToRemove is not null)
+                    pages.Remove(ToRemove);
+                StateHasChanged();
+            }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
+
+
+
+
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+
+
+
+
+    private async Task OnButtonClickedAsync(int pageId)
+    {
+        bool? result = await _mudMessageBox.ShowAsync(_maxWidth);
+        _state = result is null ? false : true;
+
+        if (_state)
+        {
+
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Page/{pageId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var ToRemove = pages.FirstOrDefault(i => i.PageId == pageId);
+                if (ToRemove is not null)
+                    pages.Remove(ToRemove);
+                StateHasChanged();
+            }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
+
+        }
+        StateHasChanged();
+    }
+
+
+    private async Task OpenDialogAsync(int pageId)
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var parameters = new DialogParameters
+        {
+            { "PageId", pageId } ,
+        };
+
+        var dialog = await DialogService.ShowAsync<PageFormDialog>("Dialog", parameters, options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            pages = await Http.GetFromJsonAsync<List<Models.Page>>(NavManager.BaseUri + $"api/Page/GetAll")
+             ?? new List<Models.Page>();
+
+
+
+
+
+            var returnedValue = result.Data;
+
+            if (pageId == 0)
+            {
+                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+
+            }
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+
+
+    private string _colorValue;
+
+
+    private List<Models.Page> pages = new();
+
+
+
+
+
+
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+
+
+
+
+        pages = await Http.GetFromJsonAsync<List<Models.Page>>(NavManager.BaseUri + $"api/Page/GetAll")
+    ?? new List<Models.Page>();
+
+
+
+    }
+
+}

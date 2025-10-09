@@ -12,6 +12,7 @@ namespace SecureOps.Data
         public AppDbContext(DbContextOptions<AppDbContext> options) : base(options) { }
         public DbSet<User> Users { get; set; }
         public DbSet<Role> Roles { get; set; }
+        public DbSet<Page> Pages { get; set; }
 
         public DbSet<Employee> Employees { get; set; } = null!;
         public DbSet<SafetyTask> SafetyTasks { get; set; } = null!;
@@ -59,7 +60,18 @@ namespace SecureOps.Data
                   .WithOne(a => a.SDocument)
                   .HasForeignKey(a => a.DocumentId);
 
-
+            modelBuilder.Entity<Page>()
+       .HasMany(p => p.Roles)
+       .WithMany(r => r.Pages)
+       .UsingEntity<Dictionary<string, object>>(
+           "PageRole", // join table name
+           j => j.HasOne<Role>().WithMany().HasForeignKey("RoleId"),
+           j => j.HasOne<Page>().WithMany().HasForeignKey("PageId"),
+           j =>
+           {
+               j.HasKey("PageId", "RoleId");
+               j.ToTable("PageRoles");
+           });
         }
 
        

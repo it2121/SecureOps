@@ -83,7 +83,8 @@ ActionsClass="dialog-background-surface">
                                 <MudButton Color="Color.Error"
                                            Variant="Variant.Filled"
                                            Size="Size.Small"
-                                           OnClick="@(async () => await OnButtonClickedAsync(context.Item.RoleId))">
+                                                   OnClick="@(async () => await OpenDeleteDialogAsync(context.Item.RoleId))">
+                                           @* OnClick="@(async () => await OnButtonClickedAsync(context.Item.RoleId))"> *@
                                     Delete
                                 </MudButton>
 
@@ -110,7 +111,18 @@ ActionsClass="dialog-background-surface">
 
     </MudDialog>
 
-
+@* 
+<MudMessageBox Class="custom-dialog blur dialog-background"
+               TitleClass="blur dialog-background-title"
+               ContentClass="dialog-background-surface py-10"
+               ActionsClass="dialog-background-surface" @ref="_mudMessageBox" Title="Warning" CancelText="Cancel">
+    <MessageContent > 
+        Deleting can <b><i>not</i></b> be undone!
+    </MessageContent>
+    <YesButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">Delete!</MudButton>
+    </YesButton>
+</MudMessageBox> *@
 
 
 
@@ -146,23 +158,11 @@ ActionsClass="dialog-background-surface">
 
 
 
-<MudMessageBox Class="custom-dialog blur dialog-background"
-               TitleClass="blur dialog-background-title"
-               ContentClass="dialog-background-surface py-10"
-               ActionsClass="dialog-background-surface"  @ref="_mudMessageBox" Title="Warning" CancelText="Cancel">
-    <MessageContent>
-        Deleting can <b><i>not</i></b> be undone!
-    </MessageContent>
-    <YesButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.DeleteForever">Delete!</MudButton>
-    </YesButton>
-</MudMessageBox>
-
 
 @code {
-
-
+    bool ShowMessage = false;
     private MudForm form;
+    private MudForm Messageform;
     public MudDataGrid<Role> grid = null;
 
     private async Task HideColumnsAsync(bool hide)
@@ -200,7 +200,7 @@ ActionsClass="dialog-background-surface">
         if (x.RoleName.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
             return true;
 
-     
+
 
 
         return false;
@@ -234,6 +234,8 @@ ActionsClass="dialog-background-surface">
 
     private async Task OnButtonClickedAsync(int roleId)
     {
+        ShowMessage = true;
+        StateHasChanged();
         bool? result = await _mudMessageBox.ShowAsync(_maxWidth);
         _state = result is null ? false : true;
 
@@ -247,10 +249,17 @@ ActionsClass="dialog-background-surface">
                 var ToRemove = roles.FirstOrDefault(i => i.RoleId == roleId);
                 if (ToRemove is not null)
                     roles.Remove(ToRemove);
+                ShowMessage = false;
+
                 StateHasChanged();
             }
             Snackbar.Add("Deleted Successfully!", Severity.Success);
 
+        }
+        else
+        {
+            ShowMessage = false;
+            
         }
         StateHasChanged();
     }
@@ -276,6 +285,46 @@ ActionsClass="dialog-background-surface">
     }
 
 
+    private async Task OpenDeleteDialogAsync(int roleId)
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+
+        var dialog = await DialogService.ShowAsync<DeleteConfirmDialog>("Dialog", options);
+
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            // roles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + $"api/Role/GetAll")
+            //  ?? new List<Role>();
+
+
+
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Role/{roleId}");
+
+            if (response.IsSuccessStatusCode)
+            {
+                var ToRemove = roles.FirstOrDefault(i => i.RoleId == roleId);
+                if (ToRemove is not null)
+                    roles.Remove(ToRemove);
+                ShowMessage = false;
+
+                StateHasChanged();
+            }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
+
+
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
     private async Task OpenDialogAsync(int roleId)
     {
 

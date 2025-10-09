@@ -14,6 +14,7 @@ namespace SecureOps.Models
 
         // Many-to-many → navigation property
         public ICollection<User> Users { get; set; } = new List<User>();
+        public ICollection<Page> Pages { get; set; } = new List<Page>();
 
     }
 }

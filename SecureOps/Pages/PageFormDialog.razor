@@ -1,0 +1,240 @@
+﻿@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Text.Json
+@using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog Class="custom-dialog blur dialog-background"
+           TitleClass="blur dialog-background-title"
+           ContentClass="dialog-background-surface py-10"
+           ActionsClass="dialog-background-surface">
+
+    <TitleContent>
+        <MudText Typo="Typo.h5">Models.Page</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Class="mt-4">
+            <MudStack Spacing="3">
+                <MudPaper Class="pa-4  dialog-background-container">
+                    <MudTextField @bind-Value="page.PageName" Label="Models.PageName"
+                                  Required="true" For="@(() => page.PageName)" />
+                </MudPaper>
+                <MudDivider />
+
+                <MudPaper Class="pa-4 dialog-background-container">
+                <MudText Typo="Typo.h6">Assign Roles</MudText>
+                <MudStack>
+                    @foreach (var role in allRoles)
+                    {
+                             <MudCheckBox T="bool"
+            Checked="role.IsSelected"
+                                         CheckedChanged="(bool val) => CheckChanged(role, val)"
+                                         Label="@role.RoleName" />
+                    }
+                </MudStack>
+            </MudPaper>
+
+
+
+
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+
+<style>
+    .custom-dialog {
+        width: 1300px !important;
+        max-width: 90vw;
+    }
+
+    .blur {
+        backdrop-filter: blur(10px);
+    }
+
+    .dialog-background {
+        background-color: transparent;
+    }
+
+    .dialog-background-title {
+        background: rgb(from var(--mud-palette-info-lighten) r g b / 50%);
+        color: var(--mud-palette-white);
+    }
+
+    .dialog-background-surface {
+        background: rgb(from var(--mud-palette-surface) r g b / 45%);
+    }
+
+    .dialog-background-container {
+        background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
+</style>
+
+@code {
+    private class RoleSelection
+    {
+        public int RoleId { get; set; }
+        public string RoleName { get; set; }
+        public bool IsSelected { get; set; }
+    }
+
+    private List<RoleSelection> allRoles = new();
+
+
+
+    private List<string> imageUrls = new List<string>();
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
+
+
+
+
+
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int PageId { get; set; }
+
+
+
+    private MudForm form;
+    private Models.Page page = new Models.Page();
+
+    private void CheckChanged(RoleSelection role, bool isChecked)
+    {
+        role.IsSelected = isChecked;
+        StateHasChanged(); // make sure UI updates
+    }
+    private async void Submit()
+    {
+        await SavePage();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+
+        if (PageId != 0)
+        {
+            Models.Page tempPage = await Http.GetFromJsonAsync<Models.Page>(NavManager.BaseUri + $"api/Page/GetPage?PageId={PageId}");
+            page = tempPage;
+
+            var roles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + "api/Role/GetAll");
+            // Prepare list with check status
+            allRoles = roles.Select(r => new RoleSelection
+            {
+                RoleId = r.RoleId,
+                RoleName = r.RoleName,
+                IsSelected = page.Roles?.Any(pr => pr.RoleId == r.RoleId) ?? false
+            }).ToList();
+
+        }
+        else
+        {
+            var roles = await Http.GetFromJsonAsync<List<Role>>(NavManager.BaseUri + "api/Role/GetAll");
+            // Prepare list with check status
+            allRoles = roles.Select(r => new RoleSelection
+            {
+                RoleId = r.RoleId,
+                RoleName = r.RoleName,
+                IsSelected = page.Roles?.Any(pr => pr.RoleId == r.RoleId) ?? false
+            }).ToList();
+
+        }
+
+
+        
+
+    
+    
+
+
+
+    }
+
+    private async Task SavePage()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        var dto = new PageDto
+        {
+            PageId = page.PageId,
+            PageName = page.PageName,
+            PageUrl = page.PageUrl,
+            SelectedRoleIds = allRoles
+          .Where(r => r.IsSelected)
+          .Select(r => r.RoleId)
+          .ToList()
+        };
+
+
+        bool okay = true;
+
+        using var content = new MultipartFormDataContent();
+
+      
+
+        var pageJson = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
+        content.Add(pageJson, "pageJson");
+
+
+
+        var response = await Http.PostAsync(NavManager.BaseUri + "api/Page/UpsertPage", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            okay = false;
+        }
+
+        if (okay)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+
+
+      
+
+        // Build DTO
+      
+
+        if (response.IsSuccessStatusCode)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        else
+        {
+            Snackbar.Add("Failed to save page", Severity.Error);
+        }
+
+    }
+}

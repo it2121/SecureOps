@@ -17,6 +17,7 @@
 
 @code {
     private MudMessageBox _mudMessageBox;
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
 
     public async Task<bool?> ShowAsync()
     {
