@@ -1,0 +1,166 @@
+﻿@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Text.Json
+@using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog Class="custom-dialog blur dialog-background"
+           TitleClass="blur dialog-background-title"
+           ContentClass="dialog-background-surface py-10"
+           ActionsClass="dialog-background-surface">
+
+    <TitleContent>
+        <MudText Typo="Typo.h5">Role</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Class="mt-4">
+            <MudStack Spacing="3">
+                <MudPaper Class="pa-4  dialog-background-container">
+                    <MudTextField @bind-Value="role.RoleName" Label="RoleName"
+                                  Required="true" For="@(() => role.RoleName)" />
+                </MudPaper>
+                <MudDivider />
+
+        
+
+            
+
+             
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+
+<style>
+    .custom-dialog {
+        width: 1300px !important;
+        max-width: 90vw;
+    }
+
+    .blur {
+        backdrop-filter: blur(10px);
+    }
+
+    .dialog-background {
+        background-color: transparent;
+    }
+
+    .dialog-background-title {
+        background: rgb(from var(--mud-palette-info-lighten) r g b / 50%);
+        color: var(--mud-palette-white);
+    }
+
+    .dialog-background-surface {
+        background: rgb(from var(--mud-palette-surface) r g b / 45%);
+    }
+
+    .dialog-background-container {
+        background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
+</style>
+
+@code {
+
+
+
+
+    private List<string> imageUrls = new List<string>();
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
+ 
+
+
+
+
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int RoleId { get; set; }
+
+
+
+    private MudForm form;
+    private Role role = new Role();
+
+    private async void Submit()
+    {
+        await SaveIncident();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+      
+
+        if (RoleId != 0)
+        {
+            Role tempRole = await Http.GetFromJsonAsync<Role>(NavManager.BaseUri + $"api/Role/GetRole?RoleId={RoleId}");
+            role = tempRole;
+
+         
+        }
+        else
+        {
+        }
+    }
+
+    private async Task SaveIncident()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+
+        
+        
+
+        bool okay = true;
+
+        using var content = new MultipartFormDataContent();
+
+
+        var roleJson = new StringContent(JsonSerializer.Serialize(role), Encoding.UTF8, "application/json");
+        content.Add(roleJson, "roleJson");
+
+
+
+        var response = await Http.PostAsync(NavManager.BaseUri + "api/Role/UpsertRole", content);
+
+        if (response.IsSuccessStatusCode)
+        {
+
+
+        }
+
+        if (!response.IsSuccessStatusCode)
+        {
+            okay = false;
+        }
+
+        if (okay)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+}

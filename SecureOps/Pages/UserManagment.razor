@@ -39,7 +39,12 @@ else
 {
 
 
-
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h5"></MudText>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenRolesDialogAsync())">
+            + New Incident
+        </MudButton>
+    </MudStack>
     <MudDataGrid ReadOnly="false"
                  @ref="grid"
                  T="UserDto"
@@ -113,7 +118,36 @@ else
 }
 @code {
 
+   // private readonly DialogOptions _maxWidth = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
 
+    private async Task OpenRolesDialogAsync()
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true ,MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters
+        {
+           
+            // pass the variable
+        };
+      
+
+        var dialog = await DialogService.ShowAsync<RolesDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+           
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
     private async Task OpenDialogAsync(int userId)
     {
 

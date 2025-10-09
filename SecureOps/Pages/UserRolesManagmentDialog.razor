@@ -302,13 +302,28 @@
 }
 private async Task OnRemoveRoleClicked(Role role)
 {
-        var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Users/RemoveRoleFromUser/{UserId}/{role.RoleId}");
-    if (response.IsSuccessStatusCode)
-    {
-        roles.Remove(role);
-        StateHasChanged();
-        Snackbar.Add($"Role {role.RoleName} removed", Severity.Success);
-    }
+     bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+
+
+
+
+
+        if (result != null)
+        {
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/Users/RemoveRoleFromUser/{UserId}/{role.RoleId}");
+            if (response.IsSuccessStatusCode)
+            {
+                roles.Remove(role);
+                StateHasChanged();
+                Snackbar.Add($"Role {role.RoleName} removed", Severity.Success);
+            }
+        }
+
+
+
 }
 private void OnRoleSelected(Role role)
 {
