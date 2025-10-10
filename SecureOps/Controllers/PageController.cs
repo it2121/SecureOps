@@ -21,51 +21,67 @@ namespace SecureOps.Controllers
 
 
         [HttpGet("GetPage")]
-        public async Task<Page> GetPage([FromQuery] int PageId)
+        public async Task<IActionResult> GetPage([FromQuery] int PageId)
         {
-            Page Page = await _db.Pages
+            var page = await _db.Pages
+                .Include(p => p.Roles)
+                .FirstOrDefaultAsync(p => p.PageId == PageId);
 
-        .FirstOrDefaultAsync(e => e.PageId == PageId);
+            if (page == null)
+                return NotFound();
 
-            if (Page == null) return null;
+            var result = new
+            {
+                page.PageId,
+                page.PageName,
+                page.PageUrl,
+                Roles = page.Roles.Select(r => new { r.RoleId, r.RoleName }).ToList()
+            };
 
-            return Page;
+            return Ok(result);
         }
-
         [HttpGet("GetAll")]
         public async Task<IActionResult> GetAll()
         {
-            var Page = await _db.Pages
+            var pages = await _db.Pages
+                .Include(p => p.Roles)
+                .ToListAsync();
 
-       .ToListAsync();
+            var pageDtos = pages.Select(p => new PageDtoWithRoles
+            {
+                PageId = p.PageId,
+                PageName = p.PageName,
+                PageUrl = p.PageUrl,
+                Roles = p.Roles.Select(r => new RoleDto
+                {
+                    RoleId = r.RoleId,
+                    RoleName = r.RoleName
+                }).ToList()
+            }).ToList();
 
-
-
-
-            return Ok(Page);
+            return Ok(pageDtos);
         }
+        [HttpDelete("{PageId}")]
+        public async Task<IActionResult> DeletePage(int PageId)
+        {
+            try
+            {
+                var Page = await _db.Pages.FindAsync(PageId);
 
-        //[HttpDelete("{PageId}")]
-        //public async Task<IActionResult> DeletePage(int PageId)
-        //{
-        //    try
-        //    {
-        //        var Page = await _db.Pages.FindAsync(PageId);
+                if (Page == null)
+                    return NotFound(new { message = $"Page with Id {PageId} not found." });
 
-        //        if (Page == null)
-        //            return NotFound(new { message = $"Page with Id {PageId} not found." });
-
-        //        _db.Pages.Remove(Page);
-        //        await _db.SaveChangesAsync();
+                _db.Pages.Remove(Page);
+                await _db.SaveChangesAsync();
 
 
-        //        return Ok(new { message = $"Page with Id {PageId} deleted successfully." });
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        return BadRequest(new { message = ex.Message });
-        //    }
-        //}
+                return Ok(new { message = $"Page with Id {PageId} deleted successfully." });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
+            }
+        }
 
 
         [HttpPost("UpsertPage")]

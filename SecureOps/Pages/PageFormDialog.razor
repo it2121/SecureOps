@@ -34,8 +34,8 @@
                     @foreach (var role in allRoles)
                     {
                              <MudCheckBox T="bool"
-            Checked="role.IsSelected"
-                                         CheckedChanged="(bool val) => CheckChanged(role, val)"
+                                         @bind-Value="role.IsSelected"
+                                         @key="role.RoleId"
                                          Label="@role.RoleName" />
                     }
                 </MudStack>
@@ -182,50 +182,17 @@
             return;
 
         var dto = new PageDto
-        {
-            PageId = page.PageId,
-            PageName = page.PageName,
-            PageUrl = page.PageUrl,
-            SelectedRoleIds = allRoles
-          .Where(r => r.IsSelected)
-          .Select(r => r.RoleId)
-          .ToList()
-        };
+            {
+                PageId = page.PageId,
+                PageName = page.PageName,
+                PageUrl = page.PageUrl,
+                SelectedRoleIds = allRoles
+                    .Where(r => r.IsSelected)
+                    .Select(r => r.RoleId)
+                    .ToList()
+            };
 
-
-        bool okay = true;
-
-        using var content = new MultipartFormDataContent();
-
-      
-
-        var pageJson = new StringContent(JsonSerializer.Serialize(dto), Encoding.UTF8, "application/json");
-        content.Add(pageJson, "pageJson");
-
-
-
-        var response = await Http.PostAsync(NavManager.BaseUri + "api/Page/UpsertPage", content);
-
-        if (response.IsSuccessStatusCode)
-        {
-
-        }
-
-        if (!response.IsSuccessStatusCode)
-        {
-            okay = false;
-        }
-
-        if (okay)
-        {
-            MudDialog.Close(DialogResult.Ok(true));
-        }
-
-
-      
-
-        // Build DTO
-      
+        var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/Page/UpsertPage", dto);
 
         if (response.IsSuccessStatusCode)
         {

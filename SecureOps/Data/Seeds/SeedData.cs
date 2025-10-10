@@ -9,14 +9,13 @@ public static class SeedData
         if (context.Users.Any() || context.Employees.Any())
             return; // DB has been seeded
 
-
-        //context.EmployeeDocumentAcknowledgements.RemoveRange(context.EmployeeDocumentAcknowledgements);
-        //context.SDocuments.RemoveRange(context.SDocuments);
-        //context.Incidents.RemoveRange(context.Incidents);
-        //context.SafetyTasks.RemoveRange(context.SafetyTasks);
-        //context.Employees.RemoveRange(context.Employees);
-        //context.Users.RemoveRange(context.Users);
-        //context.Roles.RemoveRange(context.Roles);
+        context.EmployeeDocumentAcknowledgements.RemoveRange(context.EmployeeDocumentAcknowledgements);
+        context.SDocuments.RemoveRange(context.SDocuments);
+        context.Incidents.RemoveRange(context.Incidents);
+        context.SafetyTasks.RemoveRange(context.SafetyTasks);
+        context.Employees.RemoveRange(context.Employees);
+        context.Users.RemoveRange(context.Users);
+        context.Roles.RemoveRange(context.Roles);
 
 
 
@@ -37,6 +36,7 @@ public static class SeedData
         context.SaveChanges();
 
         var dbRoles = context.Roles.ToList();
+        var adminRole = dbRoles.First(r => r.RoleName == "Admin");
 
         // 2. Seed 10 users first
         var users = new List<User>();
@@ -85,7 +85,28 @@ public static class SeedData
         }
 
         context.SaveChanges();
+        // 5. Seed Pages → All assigned to Admin
+        var pages = new List<Page>
+        {
+            new Page { PageName = "Home", PageUrl = "/Index", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Counter", PageUrl = "/Counter", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Fetch Data", PageUrl = "/FetchData", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Login", PageUrl = "/Login", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Register", PageUrl = "/Register", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Profile", PageUrl = "/Profile", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Users", PageUrl = "/Users", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Roles Dialog", PageUrl = "/RolesDialog", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "User Management", PageUrl = "/UserManagementDialog", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Incidents", PageUrl = "/Incidents", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Employee Setup", PageUrl = "/Employee-setup", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Documents", PageUrl = "/SDocument", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "Pages Management", PageUrl = "/PagesDialog", Roles = new List<Role>{ adminRole } },
+            new Page { PageName = "User Roles Management", PageUrl = "/UserRolesManagmentDialog", Roles = new List<Role>{ adminRole } },
+            // 👉 Add the rest of your .razor files if needed
+        };
 
+        context.Pages.AddRange(pages);
+        context.SaveChanges();
         // 5. Seed SDocuments
         var rnd = new Random();
         var docs = new List<SDocument>

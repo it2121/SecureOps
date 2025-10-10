@@ -28,7 +28,7 @@
             else
             {
                 <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
-                    <MudText Typo="Typo.h5">Models.Pages Managment</MudText>
+                    <MudText Typo="Typo.h5">Pages Managment</MudText>
                     <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenDialogAsync(0))">
                         + New Page
                     </MudButton>
@@ -66,8 +66,18 @@
                         <Columns>
                             <SelectColumn T="Models.Page" />
                             <PropertyColumn Property="x => x.PageName" Title="PageName" />
-                  
 
+                            <TemplateColumn Title="Roles">
+                                <CellTemplate>
+                                    @foreach (var role in context.Item.Roles)
+                                    {
+                                        <MudChip Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Info" Class="m-1">
+                                            @role.RoleName
+
+                                        </MudChip>
+                                    }
+                                </CellTemplate>
+                            </TemplateColumn>
 
 
                             <!-- Action Button Column -->
