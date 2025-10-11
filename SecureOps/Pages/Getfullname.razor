@@ -1,12 +1,16 @@
 ﻿@page "/Getfullname"
+@using Blazored.LocalStorage
 @using Microsoft.AspNetCore.Identity
 @using SecureOps.Data
 @using SecureOps.Models
 @using SecureOps.Models.Dto
 @using System.Net.Http.Headers
+@using SecureOps.Services
 @using static System.Net.WebRequestMethods
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
-
+@inject ILocalStorageService LocalStorage
+@inject IAccessService AccessService
+@inject NavigationManager Nav
 @inject UserManager<ApplicationUser> UserManager
 @inject NavigationManager NavManager
 @inject HttpClient Http
@@ -15,6 +19,9 @@
 <InputText @bind-Value="email" placeholder="Enter email" class="form-control mb-2" />
 
 <AuthorizeView Roles="Admin">
+
+
+
 
 
 <button class="btn btn-primary mb-2" @onclick="GetFullName">Get Full Name</button>
@@ -30,6 +37,26 @@
 }
 
 @code {
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        if (string.IsNullOrEmpty(token))
+        {
+            Nav.NavigateTo("/login");
+            return;
+        }
+
+        var user = JwtHelper.DecodeTokenToUser(token);
+        var roleNames = user.Roles.Select(r => r.RoleName);
+
+        bool hasAccess = await AccessService.HasAccessAsync(roleNames, "/Getfullname");
+
+        if (!hasAccess)
+        {
+            Nav.NavigateTo("/Notauthorized");
+        }
+    }
+
     private string email;
     private string fullName;
     private string errorMessage;

@@ -44,6 +44,11 @@ namespace SecureOps.Data
     .HasForeignKey(i => i.EmployeeId)
     .OnDelete(DeleteBehavior.Cascade);
 
+            modelBuilder.Entity<SafetyTask>()
+    .HasOne(t => t.Employee)
+    .WithMany(e => e.SafetyTasks)
+    .HasForeignKey(t => t.EmployeeId)
+    .OnDelete(DeleteBehavior.SetNull);
 
             // One employee can upload many documents
 

@@ -19,6 +19,8 @@ namespace SecureOps.Models
 
         // Foreign Key → Employee who reported
         public int EmployeeId { get; set; }
+
+
         public Employee? Employee { get; set; }
     }
 }

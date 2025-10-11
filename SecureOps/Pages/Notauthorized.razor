@@ -1,0 +1,26 @@
+﻿@page "/Notauthorized"
+@using MudBlazor
+
+<MudPaper Class="d-flex flex-column align-center justify-center pa-8" Elevation="4" Style="min-height:70vh;">
+    <MudIcon Icon="@Icons.Material.Filled.Lock"  Color="Color.Error" Class="mb-4" />
+    <MudText Typo="Typo.h4" Align="Align.Center" Class="mb-2">
+        Access Denied
+    </MudText>
+    <MudText Typo="Typo.subtitle1" Align="Align.Center" Class="mb-4">
+        You don't have permission to access this page.
+    </MudText>
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoHome">
+        Back to Home
+    </MudButton>
+</MudPaper>
+
+@code {
+    [Inject]
+    NavigationManager Navigation { get; set; } = default!;
+
+    void GoHome()
+    {
+        Navigation.NavigateTo("/");
+    }
+}

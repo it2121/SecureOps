@@ -94,6 +94,7 @@ builder.Services.AddControllers();
 
 builder.Services.AddSingleton<MessageService>();
 
+builder.Services.AddScoped<IAccessService, AccessService>();
 
 var app = builder.Build();
 

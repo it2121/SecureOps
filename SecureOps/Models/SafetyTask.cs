@@ -19,5 +19,7 @@ namespace SecureOps.Models
         // Foreign Key → Assigned Employee
         public int? EmployeeId { get; set; }
         public Employee? Employee { get; set; }
+
+
     }
 }

@@ -66,35 +66,6 @@ public class JwtService
         var tokenHandler = new JwtSecurityTokenHandler();
         var token = tokenHandler.CreateToken(tokenDescriptor);
         return tokenHandler.WriteToken(token);
-        /* var claims = new List<Claim>
-     {
-         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-         new Claim(ClaimTypes.Email, user.Email),
-         new Claim("fullName", user.FullName)
-     };
 
-         foreach (var role in roles)
-         {
-             claims.Add(new Claim(ClaimTypes.Role, role));
-         }
-         var key = Encoding.ASCII.GetBytes(_config["JwtSettings:SecretKey"]);
-         var tokenDescriptor = new SecurityTokenDescriptor
-         {
-             Subject = new ClaimsIdentity(new[]
-             {
-                 new Claim("Id", user.Id.ToString()),
-                 new Claim("Email", user.Email),
-                 new Claim("FullName", user.FullName)
-             }),
-             Expires = DateTime.UtcNow.AddMinutes(double.Parse(_config["JwtSettings:ExpiryMinutes"])),
-             Issuer = _config["JwtSettings:Issuer"],
-             Audience = _config["JwtSettings:Audience"],
-             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-         };
-
-         var tokenHandler = new JwtSecurityTokenHandler();
-         var token = tokenHandler.CreateToken(tokenDescriptor);
-         return tokenHandler.WriteToken(token);
-     }*/
     }
 }

@@ -1,0 +1,353 @@
+﻿@page "/SaftyTasks"
+@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using MudBlazor.Utilities
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@using System.Net.Http.Json
+@inject HttpClient httpClient
+@using Microsoft.EntityFrameworkCore
+@using MudBlazor
+@using MudBlazor.Extensions.Core
+@using MudBlazor.Extensions.Helper
+@using MudBlazor.Utilities
+@using SecureOps.Data
+@using SecureOps.Models
+@inject AppDbContext _context
+@inject NavigationManager NavManager
+@inject NavigationManager NavManager
+@inject HttpClient Http
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject IDialogService DialogService
+@inject ISnackbar Snackbar
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+<h3> User Managment </h3>
+
+
+@if (safetyTask == null)
+{
+    <p>Loading Data...</p>
+}
+else if (!safetyTask.Any())
+{
+    <p>No Data found.</p>
+}
+else
+{
+
+
+    <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h5"></MudText>
+ 
+
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenPageDialogAsync())">
+         + Add New
+        </MudButton>
+    </MudStack>
+    <MudDataGrid ReadOnly="false"
+                 @ref="grid"
+                 T="SafetyTask"
+                 MultiSelection="true"
+                 Items="@safetyTask"
+                 SortMode="SortMode.Multiple"
+                 QuickFilter="@_quickFilter"
+                 DragDropColumnReordering="true"
+                 ColumnsPanelReordering="true"
+                 Filterable="true" Groupable="true"
+                 ShowMenuIcon="true"
+                 Hideable="true" RowClick="@RowClicked"
+                 RowContextMenuClick="RowRightClicked"
+                 SelectedItemsChanged="@SelectedItemsChanged">
+        <ToolBarContent>
+            <MudText Typo="Typo.h6"> Tasks </MudText>
+            <MudSpacer />
+            <MudTextField @bind-Value="_searchString" Placeholder="Search" Adornment="Adornment.Start" Immediate="true"
+                          AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" Class="mt-0"></MudTextField>
+        </ToolBarContent>
+        <Columns>
+            <SelectColumn T="SafetyTask" />
+            <PropertyColumn Property="x => x.Title" Title="Title" />
+            <PropertyColumn Property="x => x.Status" Title="Status" />
+            <PropertyColumn Property="x => x.DueDate" Title="DueDate" />
+
+      
+            <TemplateColumn Title="Employee">
+                <CellTemplate>
+                  
+                        <MudChip Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Info" Class="m-1">
+                            @employee.FullName
+
+                        </MudChip>
+                    
+                </CellTemplate>
+            </TemplateColumn>
+
+            <!-- Action Button Column -->
+            <TemplateColumn Title="Actions" CellClass="">
+                <CellTemplate>
+                    <MudButton Color="Color.Primary"
+                               Variant="Variant.Filled"
+                               Size="Size.Small"
+                               OnClick="@(async () => await OpenDialogAsync(context.Item.Id))">
+
+
+
+
+
+
+                        View
+                    </MudButton>
+                </CellTemplate>
+            </TemplateColumn>
+
+
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="SafetyTask" />
+        </PagerContent>
+    </MudDataGrid>
+
+}
+@code {
+
+    // private readonly DialogOptions _maxWidth = new() { MaxWidth = MaxWidth.Medium, FullWidth = true };
+
+    private async Task OpenPageDialogAsync()
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters
+        {
+
+            // pass the variable
+        };
+
+
+        var dialog = await DialogService.ShowAsync<PagesDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+    private async Task OpenRolesDialogAsync()
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
+        var parameters = new DialogParameters
+        {
+
+            // pass the variable
+        };
+
+
+        var dialog = await DialogService.ShowAsync<RolesDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+    private async Task OpenDialogAsync(int userId)
+    {
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var parameters = new DialogParameters
+        {
+            { "UserId", userId } ,
+            // pass the variable
+        };
+
+        var dialog = await DialogService.ShowAsync<SaftyTasksDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/Users/GetAll");
+
+
+
+
+
+
+            var returnedValue = result.Data;
+
+            if (userId == 0)
+            {
+                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+
+            }
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+
+    private async Task OnActionButtonClicked(int userId)
+    {
+        Console.WriteLine($"Document ID clicked: {userId}");
+
+        // Example: navigate to a detail page
+        // NavManager.NavigateTo($"/SDocumentDetail/{documentId}");
+
+        // Or call your API
+        // var result = await Http.GetFromJsonAsync<SDocumentDto>($"api/SDocument/{documentId}");
+    }
+
+
+    public MudDataGrid<SafetyTask> grid = null;
+
+    private async Task HideColumnsAsync(bool hide)
+    {
+        foreach (var column in grid.RenderedColumns)
+        {
+            if (hide)
+            {
+                await column.HideAsync();
+            }
+            else
+            {
+                await column.ShowAsync();
+            }
+        }
+        ;
+    }
+
+
+    private IEnumerable<SafetyTask> safetyTask = new List<SafetyTask>();
+    // private List<SDocumentDto> sdocumentDto;
+    private string _searchString;
+    private bool _sortNameByLength;
+    private List<string> _events = new();
+    // custom sort by name length
+    private Func<SafetyTask, object> _sortBy => x =>
+    {
+        if (_sortNameByLength)
+            return x.Title.Length;
+        else
+            return x.Status;
+    };
+    // quick filter - filter globally across multiple columns with the same input
+    private Func<SafetyTask, bool> _quickFilter => x =>
+    {
+        if (string.IsNullOrWhiteSpace(_searchString))
+            return true;
+
+        if (x.Title.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        if (x.Status.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            return true;
+        // if (x.Roles.ro.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        //     return true;
+
+       
+
+        // check roles
+        // if (x.Employee != null && x.Roles.Any(r =>
+        //     r.RoleName.Contains(_searchString, StringComparison.OrdinalIgnoreCase)))
+        //     return true;
+
+        return false;
+    };
+
+
+    // events
+    void RowClicked(DataGridRowClickEventArgs<SafetyTask> args)
+    {
+        _events.Insert(0, $"Event = RowClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+
+
+
+    }
+
+    void RowRightClicked(DataGridRowClickEventArgs<SafetyTask> args)
+    {
+        _events.Insert(0, $"Event = RowRightClick, Index = {args.RowIndex}, Data = {System.Text.Json.JsonSerializer.Serialize(args.Item)}");
+    }
+
+    void SelectedItemsChanged(HashSet<SafetyTask> items)
+    {
+        _events.Insert(0, $"Event = SelectedItemsChanged, Data = {System.Text.Json.JsonSerializer.Serialize(items)}");
+    }
+
+
+
+
+    // private List<User> user;
+    private string _colorValue;
+    private Employee employee;
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+        if (!string.IsNullOrEmpty(token))
+        {
+            employee = JwtHelper.DecodeTokenToEmployee(token);
+            User? currentUser = JwtHelper.DecodeTokenToUser(token);
+
+
+
+
+
+
+
+            if (currentUser.Roles.Any(r =>
+               r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+            {
+                safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/GetAll");
+
+            }
+            else
+            {
+                safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/SafetyTask?EmpID={employee.Id}");
+            }
+        }
+
+
+
+    }
+    private IEnumerable<SafetyTask> Filtereddocuments =>
+            string.IsNullOrWhiteSpace(_searchString)
+                ? safetyTask
+                : safetyTask.Where(u =>
+                    (u.Title?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                    (u.Status?.Contains(_searchString, StringComparison.OrdinalIgnoreCase) ?? false));
+
+
+
+}
