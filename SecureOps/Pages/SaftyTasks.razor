@@ -171,14 +171,15 @@ else
         }
 
     }
-    private async Task OpenDialogAsync(int userId)
+    private async Task OpenDialogAsync(int SaftyTaskId)
     {
-
+      
         var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
 
         var parameters = new DialogParameters
         {
-            { "UserId", userId } ,
+            { "SaftyTaskId", SaftyTaskId } ,
+         
             // pass the variable
         };
 
@@ -190,7 +191,30 @@ else
         if (!result.Canceled)
         {
 
-            safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/Users/GetAll");
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                employee = JwtHelper.DecodeTokenToEmployee(token);
+                User? currentUser = JwtHelper.DecodeTokenToUser(token);
+
+
+
+
+
+
+
+                if (currentUser.Roles.Any(r =>
+                   r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/GetAll");
+
+                }
+                else
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/SafetyTask?EmpID={employee.Id}");
+                }
+            }
 
 
 
@@ -199,7 +223,7 @@ else
 
             var returnedValue = result.Data;
 
-            if (userId == 0)
+            if (SaftyTaskId == 0)
             {
                 Snackbar.Add($"Incident added Successfully!", Severity.Success);
             }

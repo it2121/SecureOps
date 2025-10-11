@@ -1,0 +1,222 @@
+﻿@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Text.Json
+@using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog Class="custom-dialog blur dialog-background"
+           TitleClass="blur dialog-background-title"
+           ContentClass="dialog-background-surface py-10"
+           ActionsClass="dialog-background-surface">
+
+    <TitleContent>
+        <MudText Typo="Typo.h5">Safty Task</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Class="mt-4">
+            <MudStack Spacing="3">
+                <MudPaper Class="pa-4  dialog-background-container">
+                    <MudTextField @bind-Value="safetyTask.Title" Label="Title"
+                                  Required="true" For="@(() => safetyTask.Title)" />
+                </MudPaper>
+                <MudDivider />
+
+                <MudPaper Class="pa-4 dialog-background-container">
+                    <MudTextField @bind-Value="safetyTask.Description" Label="Description"
+                                  Required="true" For="@(() => safetyTask.Description)" />
+                </MudPaper>
+
+                <MudGrid>
+                    <MudItem xs="6">
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudDatePicker Label="safety Task  DueDate"
+                                           Required="true" ShowWeekNumbers="true" @bind-Date="safetyTask.DueDate" />
+                        </MudPaper>
+                    </MudItem>
+
+                    <MudItem xs="6">
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudSelect @bind-Value="safetyTask.Status" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
+                                       T="string" Label="Select Status">
+                                <MudSelectItem Value="@("Open")" />
+                                <MudSelectItem Value="@("Done")" />
+                                <MudSelectItem Value="@("Overdue")" />
+                            </MudSelect>
+                        </MudPaper>
+                    </MudItem>
+                </MudGrid>
+
+              
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+
+<style>
+    .custom-dialog {
+        width: 1300px !important;
+        max-width: 90vw;
+    }
+
+    .blur {
+        backdrop-filter: blur(10px);
+    }
+
+    .dialog-background {
+        background-color: transparent;
+    }
+
+    .dialog-background-title {
+        background: rgb(from var(--mud-palette-info-lighten) r g b / 50%);
+        color: var(--mud-palette-white);
+    }
+
+    .dialog-background-surface {
+        background: rgb(from var(--mud-palette-surface) r g b / 45%);
+    }
+
+    .dialog-background-container {
+        background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
+</style>
+
+@code {
+
+
+
+
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
+
+
+
+    private async Task ConfirmDelete(string imageUrl)
+    {
+        bool? result = await DialogService.ShowMessageBox(
+            "Warning",
+            "Deleting can not be undone!",
+            yesText: "Delete!", cancelText: "Cancel");
+
+
+
+
+
+        if (result != null)
+        {
+           // await DeleteImageAsync(imageUrl);
+        }
+    }
+
+
+
+
+    private async Task OnButtonClickedAsync(string relativePath)
+    {
+        bool? result = await _mudMessageBox.ShowAsync();
+        _state = result is null ? false : true;
+
+        if (_state)
+        {
+
+            var response = await Http.DeleteAsync(NavManager.BaseUri + $"api/incident/DeleteImage?relativePath={Uri.EscapeDataString(relativePath)}");
+
+            if (response.IsSuccessStatusCode)
+            {
+             
+                StateHasChanged();
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+            }
+            Snackbar.Add("Deleted Successfully!", Severity.Success);
+
+        }
+        StateHasChanged();
+    }
+
+
+
+
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int SaftyTaskId { get; set; }
+    [Parameter] public int EmployeeId { get; set; }
+
+    private Employee employee;
+    private MudForm form;
+    private SafetyTask safetyTask = new SafetyTask();
+
+    private async void Submit()
+    {
+        await SaveSafetyTask();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
+
+        if (SaftyTaskId != 0)
+        {
+            SafetyTask tempSafetyTask = await Http.GetFromJsonAsync<SafetyTask>(NavManager.BaseUri + $"api/SafetyTask/GetSafetyTask?SafetyTaskId={SaftyTaskId}");
+            safetyTask = tempSafetyTask;
+
+       
+        }
+        else
+        {
+        }
+    }
+
+    private async Task SaveSafetyTask()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+        bool okay = true;
+        safetyTask.EmployeeId = EmployeeId;
+        using var content = new MultipartFormDataContent();
+        var safetyTaskJson = new StringContent(JsonSerializer.Serialize(safetyTask), Encoding.UTF8, "application/json");
+        content.Add(safetyTaskJson, "safetyTaskJson");
+
+        var response = await Http.PostAsync(NavManager.BaseUri + "api/SaftyTask/UpsertSaftyTask", content);
+        if (!response.IsSuccessStatusCode)
+        {
+            okay = false;
+        }
+   
+
+     
+         
+        
+
+        if (okay)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+}

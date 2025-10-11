@@ -11,7 +11,7 @@ namespace SecureOps.Models
 
         public string? Description { get; set; }
 
-        public DateTime DueDate { get; set; } = DateTime.UtcNow;
+        public DateTime? DueDate { get; set; } = DateTime.UtcNow;
 
         [Required]
         public string Status { get; set; } = "Open"; // Open, Done, Overdue

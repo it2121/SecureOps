@@ -19,16 +19,26 @@ namespace SecureOps.Controllers
             _db = db;
         }
 
+        [HttpGet("GetSafetyTask")]
+        public async Task<SafetyTask> GetSafetyTask([FromQuery] int SafetyTaskId)
+        {
+            SafetyTask safetyTask = await _db.SafetyTasks
 
+        .FirstOrDefaultAsync(e => e.Id == SafetyTaskId);
+
+            if (safetyTask == null) return null;
+
+            return safetyTask;
+        }
 
         [HttpPost("UpsertSaftyTask")]
 
-        public async Task<IActionResult> UpsertSaftyTask([FromForm] string saftyTask)
+        public async Task<IActionResult> UpsertSaftyTask([FromForm] string safetyTaskJson)
 
         {
             try
             {
-                SafetyTask _saftyTask = JsonSerializer.Deserialize<SafetyTask>(saftyTask);
+                SafetyTask _saftyTask = JsonSerializer.Deserialize<SafetyTask>(safetyTaskJson);
 
                
                 var existingSaftyTask = await _db.SafetyTasks.FindAsync(_saftyTask.Id);
