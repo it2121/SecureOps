@@ -24,7 +24,7 @@
 @inject ISnackbar Snackbar
 @using MudBlazor.Extensions;
 @using MudBlazor.Extensions.Options;
-<h3> User Managment </h3>
+<h3> Safety Tasks  </h3>
 
 
 @if (safetyTask == null)
@@ -33,6 +33,22 @@
 }
 else if (!safetyTask.Any())
 {
+      <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudText Typo="Typo.h5"></MudText>
+
+
+
+        <AuthorizeView Roles="Manager">
+
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenPageDialogAsync())">
+                + Add New
+
+            </MudButton>
+
+
+
+        </AuthorizeView>
+    </MudStack>
     <p>No Data found.</p>
 }
 else
@@ -41,11 +57,16 @@ else
 
     <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-4">
         <MudText Typo="Typo.h5"></MudText>
- 
+        <AuthorizeView Roles="Manager">
 
-        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenPageDialogAsync())">
-         + Add New
-        </MudButton>
+            <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="@(() => OpenPageDialogAsync())">
+                + Add New
+
+            </MudButton>
+
+
+
+        </AuthorizeView>
     </MudStack>
     <MudDataGrid ReadOnly="false"
                  @ref="grid"
@@ -78,7 +99,7 @@ else
                 <CellTemplate>
                   
                         <MudChip Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Info" Class="m-1">
-                            @employee.FullName
+                            @context.Item.Employee?.FullName
 
                         </MudChip>
                     
@@ -86,7 +107,25 @@ else
             </TemplateColumn>
 
             <!-- Action Button Column -->
-            <TemplateColumn Title="Actions" CellClass="">
+            <TemplateColumn Title=" " CellClass="">
+                <CellTemplate>
+                    <MudButton Color="Color.Info"
+                               Variant="Variant.Filled"
+                               Size="Size.Small"
+                               OnClick="@(async () => await OpenAEDialogAsync(context.Item.Id))">
+
+
+
+
+
+
+                        Assign Employee
+                    </MudButton>
+                </CellTemplate>
+                </TemplateColumn>
+            <TemplateColumn Title=" " CellClass="">
+
+                 
                 <CellTemplate>
                     <MudButton Color="Color.Primary"
                                Variant="Variant.Filled"
@@ -121,12 +160,12 @@ else
         var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true, MaxWidth = MaxWidth.Medium, FullWidth = true };
         var parameters = new DialogParameters
         {
-
+             { "SaftyTaskId", 0 } ,
             // pass the variable
         };
 
 
-        var dialog = await DialogService.ShowAsync<PagesDialog>("Dialog", parameters, options);
+        var dialog = await DialogService.ShowAsync<SaftyTasksDialog>("Dialog", parameters, options);
 
         // Wait for dialog to close and get result
         var result = await dialog.Result;
@@ -134,7 +173,32 @@ else
         if (!result.Canceled)
         {
 
+            
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
 
+            if (!string.IsNullOrEmpty(token))
+            {
+             
+                User? currentUser = JwtHelper.DecodeTokenToUser(token);
+
+
+
+
+
+
+
+                if (currentUser.Roles.Any(r =>
+                   r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetAll");
+                   
+                }
+                else
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetSaftyTaskOfEmployee?EmpID={employee.Id}");
+                }
+            }
+            StateHasChanged();
             return;
         }
         else
@@ -162,7 +226,102 @@ else
         if (!result.Canceled)
         {
 
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
 
+            if (!string.IsNullOrEmpty(token))
+            {
+                employee = JwtHelper.DecodeTokenToEmployee(token);
+                User? currentUser = JwtHelper.DecodeTokenToUser(token);
+
+
+
+
+
+
+
+                if (currentUser.Roles.Any(r =>
+                   r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetAll");
+
+                }
+                else
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetSaftyTaskOfEmployee?EmpID={employee.Id}");
+                }
+            }
+            StateHasChanged();
+            return;
+        }
+        else
+        {
+            return;
+        }
+
+    }
+    private async Task OpenAEDialogAsync(int SaftyTaskId)
+    {
+      
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
+        var parameters = new DialogParameters
+        {
+            { "SaftyTaskId", SaftyTaskId } ,
+        
+         
+            // pass the variable
+        };
+
+        var dialog = await DialogService.ShowAsync<SaftyTasksAEDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+
+            var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+            if (!string.IsNullOrEmpty(token))
+            {
+                employee = JwtHelper.DecodeTokenToEmployee(token);
+                User? currentUser = JwtHelper.DecodeTokenToUser(token);
+
+
+
+
+
+
+
+                if (currentUser.Roles.Any(r =>
+                   r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetAll");
+
+                }
+                else
+                {
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetSaftyTaskOfEmployee?EmpID={employee.Id}");
+                }
+            }
+
+
+
+
+
+
+            var returnedValue = result.Data;
+
+            if (SaftyTaskId == 0)
+            {
+                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+
+            }
+            StateHasChanged();
             return;
         }
         else
@@ -207,12 +366,12 @@ else
                 if (currentUser.Roles.Any(r =>
                    r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
                 {
-                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/GetAll");
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetAll");
 
                 }
                 else
                 {
-                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/SafetyTask?EmpID={employee.Id}");
+                    safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetSaftyTaskOfEmployee?EmpID={employee.Id}");
                 }
             }
 
@@ -232,6 +391,7 @@ else
                 Snackbar.Add($"Incident edited Successfully!", Severity.Success);
 
             }
+            StateHasChanged();
             return;
         }
         else
@@ -353,12 +513,12 @@ else
             if (currentUser.Roles.Any(r =>
                r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase)))
             {
-                safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/GetAll");
+                safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetAll");
 
             }
             else
             {
-                safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SafetyTask/SafetyTask?EmpID={employee.Id}");
+                safetyTask = await Http.GetFromJsonAsync<List<SafetyTask>>(NavManager.BaseUri + $"api/SaftyTask/GetSaftyTaskOfEmployee?EmpID={employee.Id}");
             }
         }
 
