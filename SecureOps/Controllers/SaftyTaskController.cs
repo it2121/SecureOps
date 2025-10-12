@@ -144,7 +144,7 @@ namespace SecureOps.Controllers
         public async Task<IActionResult> GetAll()
         {
             var safetyTasks = await _db.SafetyTasks
-                .Include(s => s.Employee) // ✅ include employee navigation
+                .Include(s => s.Employee) 
                 .Select(s => new
                 {
                     s.Id,

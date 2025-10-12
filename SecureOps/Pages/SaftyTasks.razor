@@ -97,11 +97,24 @@ else
       
             <TemplateColumn Title="Employee">
                 <CellTemplate>
-                  
+
+                    @if (@context.Item.Employee != null)
+                    {
                         <MudChip Icon="@Icons.Material.Filled.VerifiedUser" Color="Color.Info" Class="m-1">
                             @context.Item.Employee?.FullName
 
                         </MudChip>
+                    }
+                    else
+                    {
+
+                        <MudChip Icon="@Icons.Material.Filled.Pending" Color="Color.Error" Class="m-1">
+                            unassigned
+
+                        </MudChip>
+                        
+                    }
+                     
                     
                 </CellTemplate>
             </TemplateColumn>
@@ -314,11 +327,11 @@ else
 
             if (SaftyTaskId == 0)
             {
-                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+                Snackbar.Add($"Task added Successfully!", Severity.Success);
             }
             else
             {
-                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+                Snackbar.Add($"Task edited Successfully!", Severity.Success);
 
             }
             StateHasChanged();
@@ -384,11 +397,11 @@ else
 
             if (SaftyTaskId == 0)
             {
-                Snackbar.Add($"Incident added Successfully!", Severity.Success);
+                Snackbar.Add($"Task added Successfully!", Severity.Success);
             }
             else
             {
-                Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+                Snackbar.Add($"Task edited Successfully!", Severity.Success);
 
             }
             StateHasChanged();
