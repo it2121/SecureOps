@@ -1,28 +1,61 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
+using SecureOps.Data;
+using SecureOps.Models;
 using SecureOps.Models;
 using SecureOps.Models.Dto;
+using SecureOps.Models.Dto;
 using SecureOps.Pages;
+using SecureOps.Services;
+using SecureOps.Services;
 using System.Globalization;
 using System.Text.Json;
-using static System.Net.WebRequestMethods;
+using System.Text.Json;
+using System.Threading.Tasks;
 
 namespace SecureOps.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+
+
+
+ 
+
+
     public class IncidentController : ControllerBase
     {
         private readonly AppDbContext _db;
 
+        private readonly PdfService _pdfService;
 
-        public IncidentController(AppDbContext db)
+        public IncidentController(AppDbContext db ,PdfService pdfService)
         {
             _db = db;
+            _pdfService = pdfService;
+
         }
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> GenerateIncidentPdf(int id)
+        {
+            var incident = await _db.Incidents
+                .Include(x => x.Employee)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (incident == null)
+                return NotFound();
+
+            var pdf = _pdfService.GenerateIncidentReport(incident);
+
+            return File(pdf, "application/pdf", $"Incident_{id}.pdf");
+        }
+
+
 
         [HttpGet("GetCurrentIncidentID")]
         public async Task<ActionResult<int>> GetCurrentIncidentID()

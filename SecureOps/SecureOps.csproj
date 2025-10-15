@@ -31,8 +31,13 @@
     <PackageReference Include="MudBlazor.Extensions" Version="8.13.0-prev-2509231017-dock" />
     <PackageReference Include="MudBlazor.ThemeManager" Version="3.0.0" />
     <PackageReference Include="MudBlazor.Translations" Version="2.6.0" />
+    <PackageReference Include="QuestPDF" Version="2025.7.2" />
     <PackageReference Include="Spectre.Console" Version="0.51.2-preview.0.3" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\Avatars\" />
   </ItemGroup>
 
 </Project>

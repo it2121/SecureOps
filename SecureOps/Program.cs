@@ -16,8 +16,10 @@ using SecureOps.Services;
 using System.Text;
 using MudBlazor.Translations;
 using MudBlazor.Extensions;
+using QuestPDF.Infrastructure;
 
 var builder = WebApplication.CreateBuilder(args);
+QuestPDF.Settings.License = LicenseType.Community;
 
 var jwtSettings = builder.Configuration.GetSection("JwtSettings");
 var key = Encoding.ASCII.GetBytes(jwtSettings["SecretKey"]);
@@ -89,12 +91,14 @@ builder.Services.AddMudServicesWithExtensions();
 
 builder.Services.AddAuthentication();
 builder.Services.AddAuthorization();
+builder.Services.AddScoped<PdfService>();
 
 builder.Services.AddControllers();
 
 builder.Services.AddSingleton<MessageService>();
 
 builder.Services.AddScoped<IAccessService, AccessService>();
+
 
 var app = builder.Build();
 
@@ -125,7 +129,6 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
 
 
 app.MapBlazorHub();

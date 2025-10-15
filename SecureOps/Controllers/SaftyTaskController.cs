@@ -1,8 +1,9 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
-using SecureOps.Models.Dto;
 using SecureOps.Models;
+using SecureOps.Models.Dto;
+using SecureOps.Services;
 using System.Text.Json;
 
 namespace SecureOps.Controllers
@@ -12,11 +13,26 @@ namespace SecureOps.Controllers
     public class SaftyTaskController : ControllerBase
     {
         private readonly AppDbContext _db;
+        private readonly PdfService _pdfService;
 
-
-        public SaftyTaskController(AppDbContext db)
+        public SaftyTaskController(AppDbContext db, PdfService pdfService)
         {
             _db = db;
+            _pdfService = pdfService;
+
+        }
+        [HttpGet("{id}/pdf")]
+        public async Task<IActionResult> GenerateSafetyTaskPdf(int id)
+        {
+            var task = await _db.SafetyTasks
+                .Include(x => x.Employee)
+                .FirstOrDefaultAsync(x => x.Id == id);
+
+            if (task == null)
+                return NotFound();
+
+            var pdf = _pdfService.GenerateSafetyTaskReport(task);
+            return File(pdf, "application/pdf", $"SafetyTask_{id}.pdf");
         }
 
         [HttpGet("GetSafetyTask")]
@@ -30,6 +46,10 @@ namespace SecureOps.Controllers
 
             return safetyTask;
         }
+
+
+
+
         [HttpPost("UpdateAssignedEmployee")]
 
         public async Task<IActionResult> UpdateAssignedEmployee([FromForm] string safetyTaskJson)

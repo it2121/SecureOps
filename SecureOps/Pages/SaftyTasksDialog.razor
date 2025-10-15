@@ -53,7 +53,12 @@
                     </MudItem>
                 </MudGrid>
 
-              
+                @if (SaftyTaskId!=0)
+                {
+                    <MudButton FullWidth=true Variant="Variant.Filled" Color="Color.Warning" OnClick="GeneratePdf">
+                    Generate Pdf
+                </MudButton>
+                }
             </MudStack>
         </MudForm>
     </DialogContent>
@@ -103,6 +108,16 @@
 
 @code {
 
+
+    private async Task GeneratePdf()
+    {
+   
+        if (SaftyTaskId!=0)
+                    NavManager.NavigateTo(NavManager.BaseUri + $"api/SaftyTask/{SaftyTaskId}/pdf", forceLoad: true);
+
+   
+
+    }
 
 
 

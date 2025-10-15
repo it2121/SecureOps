@@ -10,5 +10,14 @@
         public string Email { get; set; }
 
 
+
+
+        // 🆕 Optional extra info for profile display
+        public string? PhoneNumber { get; set; }
+        public string? Department { get; set; }
+
+        // 🖼 Avatar support — path relative to wwwroot (e.g. "Avatars/3/avatar.jpg")
+        public string? AvatarPath { get; set; }
+
     }
 }

@@ -5,91 +5,102 @@
 @inject HttpClient Http
 @inject NavigationManager NavManager
 @inject ISnackbar Snackbar
-@inject NavigationManager NavManager
 @inject JwtAuthenticationStateProvider AuthStateProvider
-@inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 
-
-
-<MudPaper Class="p-6 mx-auto mt-6" Elevation="4" MaxWidth="600px" Rounded="true">
-    <MudText Typo="Typo.h5" Class="mb-4">Employee Profile</MudText>
-
+<MudPaper Class="p-6 mx-auto mt-8" Elevation="8" MaxWidth="700px" Rounded="true">
     @if (isLoading)
     {
-        <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" Class="m-4" />
-        <MudText Typo="Typo.subtitle2">Loading profile...</MudText>
+        <div class="flex flex-col items-center justify-center py-10">
+            <MudProgressCircular Indeterminate="true" Color="Color.Primary" Size="Size.Large" />
+            <MudText Typo="Typo.subtitle2" Class="mt-2">Loading profile...</MudText>
+        </div>
     }
     else if (!empExist)
     {
-        <MudText Typo="Typo.body1" Color="Color.Error">
-            ⚠ You don’t have an employee profile yet.  
+        <MudText Typo="Typo.body1" Color="Color.Error" Align="Align.Center" Class="mb-4">
+            ⚠ You don’t have an employee profile yet.<br />
             Please fill in your employee information first.
         </MudText>
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" Class="mt-4" OnClick="GoToEmployeeSetup">
-            Fill Employee Info
-        </MudButton>
+        <div class="flex justify-center">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="GoToEmployeeSetup">
+                Fill Employee Info
+            </MudButton>
+        </div>
     }
     else
     {
-        <MudGrid>
+        <div class="flex flex-col items-center text-center mb-4">
+            <MudImage Src="@avatarUrl"
+                                    Height="150"
+                                    
+                                    Class="rounded-lg" 
+                                    
+                                    />
+
+            @* <MudImage Size="Size.Large" Class="mb-3" Src="@avatarUrl" /> *@
+            <MudText Typo="Typo.h5" Class="font-bold">@employeeDto.FullName</MudText>
+            <MudText Typo="Typo.subtitle2" Color="Color.Secondary">@employeeDto.Email</MudText>
+        </div>
+
+        <MudDivider Class="my-4" />
+
+        <MudGrid Class="px-2">
             <MudItem xs="12" sm="6">
-                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Employee ID:</MudText>
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Employee ID</MudText>
                 <MudText Typo="Typo.body1">@employeeDto.Id</MudText>
             </MudItem>
 
-            <MudItem xs="12" sm="6">
-                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Full Name:</MudText>
-                <MudText Typo="Typo.body1">@employeeDto.FullName</MudText>
-            </MudItem>
-
-            <MudItem xs="12" sm="6">
-                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Email:</MudText>
-                <MudText Typo="Typo.body1">@employeeDto.Email</MudText>
-            </MudItem>
-
          
+
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Phone</MudText>
+                <MudText Typo="Typo.body1">@employeeDto.PhoneNumber ?? "N/A"</MudText>
+            </MudItem>
+
+            <MudItem xs="12" sm="6">
+                <MudText Typo="Typo.subtitle2" Color="Color.Secondary">Department</MudText>
+                <MudText Typo="Typo.body1">@employeeDto.Department ?? "N/A"</MudText>
+            </MudItem>
         </MudGrid>
 
         <MudDivider Class="my-4" />
 
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditProfile">
-            Edit Profile
-        </MudButton>
+        <div class="flex justify-end gap-2">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditProfile">
+                Edit Profile
+            </MudButton>
+        </div>
     }
 </MudPaper>
 
 @code {
-    private Employee? employee;
+    private EmployeeDto? employeeDto;
     private bool isLoading = true;
-    bool empExist = false;
-    EmployeeDto? employeeDto;
+    private bool empExist = false;
+    private string? avatarUrl;
 
     protected override async Task OnInitializedAsync()
     {
-        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
-        var user = authState.User;
         try
         {
+            var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+            var user = authState.User;
             var token = await LocalStorage.GetItemAsync<string>("authToken");
+
             var employeeIdClaim = user.FindFirst("employeeId")?.Value;
             empExist = int.TryParse(employeeIdClaim, out var empId);
-            if (empExist)
+
+            if (empExist && empId > 0)
             {
                 employeeDto = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
-            
-            
+                avatarUrl = await GetAvatarUrlAsync(empId);
             }
             else
             {
                 empExist = false;
-                employee = null;
-        }
-
-
-
-
+            }
         }
         catch (Exception ex)
         {
@@ -101,13 +112,51 @@
         }
     }
 
-    private void EditProfile()
+    private async Task<string> GetAvatarUrlAsync(int userId)
     {
-        NavManager.NavigateTo("/edit-profile");
+        try
+        {
+            //  Avatars / 265 / 1.jpg
+            string relativePath = "";
+            string basePath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatars");
+
+            string[] filePaths = Directory.GetFiles(basePath + "\\" + userId);
+            foreach (var filePath in filePaths)
+            {
+
+              
+                    relativePath = filePath;
+                
+
+            }
+
+            string FolderPathHolder = relativePath.StartsWith(@"wwwroot\")
+                   ? relativePath.Substring(@"wwwroot\".Length)
+                   : relativePath;
+
+            int index = relativePath.IndexOf("wwwroot");
+            if (index >= 0)
+            {
+                relativePath = relativePath.Substring(index + "wwwroot".Length);
+            }
+
+            return relativePath;
+            // Build path: /Avatars/{userId}/firstFile
+           
+            // var response = await Http.GetAsync($"Avatars/{userId}/");
+
+            // This part assumes you have a backend endpoint or static file serving enabled for Avatars folder.
+            // You can list or store only one image in that folder per user.
+            // For simplicity, return directly:
+            // return $"{NavManager.BaseUri}Avatars/{userId}/avatar.jpg";
+        }
+        catch
+        {
+            // fallback default avatar
+            return $"{NavManager.BaseUri}images/default-avatar.png";
+        }
     }
 
-    private void GoToEmployeeSetup()
-    {
-        NavManager.NavigateTo("/employee-setup");
-    }
+    private void EditProfile() => NavManager.NavigateTo("/edit-profile");
+    private void GoToEmployeeSetup() => NavManager.NavigateTo("/employee-setup");
 }
