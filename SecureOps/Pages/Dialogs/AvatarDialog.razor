@@ -1,0 +1,149 @@
+﻿@using MudBlazor
+@inject ISnackbar Snackbar
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Update Profile Picture</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.body2" Color="Color.Secondary" Class="mb-4">
+            Upload a new profile picture. Supported formats: JPG, PNG, GIF. Max size: 5MB.
+        </MudText>
+
+     
+        <MudFileUpload T="IBrowserFile"
+                       Accept=".png,.jpg,.jpeg,.gif"
+                       MaxFileSize="5000000"
+                       @bind-File="selectedFile"
+                       FilesChanged="UploadFiles2">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.CloudUpload">
+                    Only image files
+                </MudButton>
+            </ActivatorContent>
+                   
+                   </MudFileUpload>
+    
+        @if (selectedFile != null)
+        {
+            <MudText Typo="Typo.caption" Class="mt-2">
+                Selected: @selectedFile.Name (@(selectedFile.Size / 1024) KB)
+            </MudText>
+
+            <!-- Preview the selected image -->
+            <div class="mt-4 text-center">
+                <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mb-2">Preview:</MudText>
+
+                <MudImage Src="@imageUrl"
+                                    Height="150"
+                                    Elevation="25"
+                                    Class="rounded-lg" />
+
+            </div>
+        }
+    </DialogContent>
+    <DialogActions>
+        <MudButton Variant="Variant.Text" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   OnClick="UploadAvatar"
+                   Disabled="selectedFile == null"
+                   StartIcon="Icons.Material.Filled.Upload">
+            Upload
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+@code {
+    [CascadingParameter] IMudDialogInstance MudDialog { get; set; } = default!;
+    [Parameter] public EventCallback<string> OnAvatarUploaded { get; set; }
+    [Parameter] public int EmployeeId { get; set; }
+    string imageUrl;
+    private IBrowserFile? selectedFile;
+    private string? imagePreviewUrl;
+
+    private void Cancel()
+    {
+        selectedFile = null;
+        imagePreviewUrl = null;
+        MudDialog.Cancel();
+    }
+    private async Task UploadFiles2(IBrowserFile file)
+    {
+        selectedFile = file;
+
+        if (selectedFile != null)
+        { 
+        //return string.Empty;
+        using var stream = selectedFile.OpenReadStream(10 * 1024 * 1024);
+        using var ms = new MemoryStream();
+        await stream.CopyToAsync(ms);
+
+        var bytes = ms.ToArray();
+        var imageBase64 = Convert.ToBase64String(bytes);
+        imageUrl = $"data:{selectedFile.ContentType};base64,{imageBase64}";
+        // Create object URL for preview (this works in Blazor)
+
+    }
+
+        // this.files.Add(file);
+
+        //     using var stream = file.OpenReadStream(10 * 1024 * 1024);
+        //     using var ms = new MemoryStream();
+        //     await stream.CopyToAsync(ms);
+
+        //     var bytes = ms.ToArray();
+        //     var imageBase64 = Convert.ToBase64String(bytes);
+        //     var imageUrl = $"data:{file.ContentType};base64,{imageBase64}";
+        //     imageUrls.Add(imageUrl);
+
+            StateHasChanged();
+        
+    }
+    private async Task UploadAvatar()
+    {
+        if (selectedFile == null)
+        {
+            Snackbar.Add("Please select a file", Severity.Warning);
+            return;
+        }
+
+        try
+        {
+            // Show loading state
+            Snackbar.Add("Uploading avatar...", Severity.Info);
+
+            // TODO: Implement your actual upload logic here
+            // Example:
+            // var result = await UploadService.UploadAvatarAsync(selectedFile, EmployeeId);
+            // if (result.Success)
+            // {
+            //     await OnAvatarUploaded.InvokeAsync(result.Url);
+            //     Snackbar.Add("Avatar updated successfully!", Severity.Success);
+            //     MudDialog.Close(DialogResult.Ok(true));
+            // }
+
+            // Simulate upload delay
+            await Task.Delay(1000);
+
+            Snackbar.Add("Avatar updated successfully!", Severity.Success);
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+        catch (Exception ex)
+        {
+            Snackbar.Add($"Failed to upload avatar: {ex.Message}", Severity.Error);
+        }
+    }
+
+
+    // Dispose the object URL when component is disposed
+    public void Dispose()
+    {
+        if (!string.IsNullOrEmpty(imagePreviewUrl))
+        {
+      //      URL.RevokeObjectURL(imagePreviewUrl);
+        }
+    }
+}
