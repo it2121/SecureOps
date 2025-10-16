@@ -46,6 +46,8 @@
         currentUser = JwtHelper.DecodeTokenToUser(token);
         submittedModel.UserId = currentUser.Id; 
         submittedModel.Email = currentUser.Email;
+        submittedModel.FullName = model.FullName;
+        submittedModel.PhoneNumber = model.PhoneNumber;
 
 
         var response = await Http.PostAsJsonAsync(NavManager.BaseUri + "api/employee/RegisterEmployee", submittedModel);

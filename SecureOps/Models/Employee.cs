@@ -10,13 +10,18 @@ namespace SecureOps.Models
         public string FullName { get; set; } = string.Empty;
 
         [Required, MaxLength(100)]
-        public string Email { get; set; } = string.Empty;
+        public string Email { get; set; } = string.Empty; 
+        
+       
+        public string PhoneNumber { get; set; } = string.Empty;
 
         [MaxLength(50)]
         public string? JobTitle { get; set; }
 
         // One-to-one → navigation property
         public User? User { get; set; }   // Each Employee has one User
+        public Department? Department { get; set; }   // Each Employee has one User
+        public int? DepartmentId { get; set; }  // optional foreign key
         public int? UserId { get; set; }  // optional foreign key
 
 

@@ -31,11 +31,13 @@ namespace SecureOps.Controllers
             return new EmployeeDto
             {
                 Id = employee.Id,
+                PhoneNumber = employee.PhoneNumber,
                 FullName = employee.FullName,
                 JobTitle = employee.JobTitle,
                 UserId = employee.User?.Id ?? 0,
                 Email   = employee.Email,
-                
+                Department = employee.Department
+
             };
         }
         [HttpGet("GetAll")]
@@ -46,6 +48,40 @@ namespace SecureOps.Controllers
                 .ToListAsync();
 
             return Ok(employees);
+        }
+
+        [HttpPost("SetDepartment")]
+        public async Task<IActionResult> SetDepartment([FromBody] int employeeId, int departmentId)
+        {
+            if (employeeId <= 0 || departmentId <= 0)
+                return BadRequest(new { message = "Invalid employee or department ID." });
+
+            var employee = await _db.Employees.FirstOrDefaultAsync(e => e.Id == employeeId);
+            if (employee == null)
+                return NotFound(new { message = "Employee not found." });
+
+            var department = await _db.Departments.FirstOrDefaultAsync(d => d.Id == departmentId);
+            if (department == null)
+                return NotFound(new { message = "Department not found." });
+
+            // Assign or update department
+            employee.DepartmentId = departmentId;
+
+            _db.Employees.Update(employee);
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Department assignment updated successfully.",
+                employee = new
+                {
+                    employee.Id,
+                    employee.FullName,
+                    employee.JobTitle,
+                    employee.Email,
+                    Department = department.Name
+                }
+            });
         }
 
 
@@ -59,6 +95,7 @@ namespace SecureOps.Controllers
                 {
                     FullName = Emp.FullName,
                     Email = Emp.Email,
+                    PhoneNumber = Emp.PhoneNumber,
                     UserId = Emp.UserId,
                     JobTitle = Emp.JobTitle,
                 };

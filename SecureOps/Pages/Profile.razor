@@ -125,7 +125,7 @@
                                 <div>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">Department</MudText>
                                     <MudText Typo="Typo.body1" Class="font-medium">
-                                        @(string.IsNullOrEmpty(employeeDto.Department) ? "Not assigned" : employeeDto.Department)
+                                        @(string.IsNullOrEmpty(employeeDto.Department.Name) ? "Not assigned" : employeeDto.Department.Name)
                                     </MudText>
                                 </div>
                             </div>

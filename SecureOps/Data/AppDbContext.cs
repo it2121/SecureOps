@@ -14,6 +14,7 @@ namespace SecureOps.Data
         public DbSet<Role> Roles { get; set; }
         public DbSet<Page> Pages { get; set; }
 
+        public DbSet<Department> Departments { get; set; } = null!;
         public DbSet<Employee> Employees { get; set; } = null!;
         public DbSet<SafetyTask> SafetyTasks { get; set; } = null!;
         public DbSet<Incident> Incidents { get; set; } = null!;
@@ -22,7 +23,28 @@ namespace SecureOps.Data
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+
+
+
+
+
             base.OnModelCreating(modelBuilder);
+
+
+            // Department → Employees (one-to-many)
+            modelBuilder.Entity<Department>()
+                .HasMany(d => d.Employees)
+                .WithOne(e => e.Department)
+                .HasForeignKey(e => e.DepartmentId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Department → Manager (self-reference)
+            modelBuilder.Entity<Department>()
+                .HasOne(d => d.Manager)
+                .WithMany() // a manager doesn't have a collection of departments they manage
+                .HasForeignKey(d => d.ManagerId)
+                .OnDelete(DeleteBehavior.Restrict);
+
 
             // Many-to-many configuration
             modelBuilder.Entity<User>()
