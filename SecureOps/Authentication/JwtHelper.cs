@@ -13,14 +13,14 @@ using static System.Net.WebRequestMethods;
 
 public static class JwtHelper
 {
-    public static User DecodeTokenToUser(string token)
+    public static UserDto DecodeTokenToUser(string token)
     {
         if (string.IsNullOrEmpty(token)) return null;
 
         var handler = new JwtSecurityTokenHandler();
         var jwtToken = handler.ReadJwtToken(token);
 
-        var user = new User
+        var user = new UserDto
         {
             Email = jwtToken.Claims.FirstOrDefault(c => c.Type == "Email")?.Value
                     ?? jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value,

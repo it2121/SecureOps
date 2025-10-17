@@ -2,6 +2,7 @@
 @using MudBlazor
 @using SecureOps.Models
 @using MudBlazor.Utilities
+@using SecureOps.Models.Dto
 @using SecureOps.Services
 @inject ISnackbar Snackbar
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
@@ -118,7 +119,7 @@
 
     private DateTime? _date = DateTime.Today;
 
-    private User currentUser;
+    private UserDto currentUser;
     private Employee currentEmp;
     protected override void OnInitialized()
     {

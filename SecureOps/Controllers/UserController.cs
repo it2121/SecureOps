@@ -64,9 +64,12 @@ namespace SecureOps.Controllers
                 {
                     Id = u.Id,
                     Email = u.Email,
-                    FullName = u.FullName,
                     Username = u.Username,
-                    Roles = u.Roles
+                    Roles = u.Roles,
+                    FullName = _db.Employees
+                                 .Where(e => e.UserId == u.Id)
+                                 .Select(e => e.FullName)
+                                 .FirstOrDefault()
                 })
                 .FirstOrDefaultAsync();
 
@@ -93,7 +96,10 @@ namespace SecureOps.Controllers
                 {
                     Id = u.Id,
                     Email = u.Email,
-                    FullName = u.FullName,
+                    FullName = _db.Employees
+                                 .Where(e => e.UserId == u.Id)
+                                 .Select(e => e.FullName)
+                                 .FirstOrDefault(),
                     Username = u.Username,
                     Roles = u.Roles
                 })
@@ -119,7 +125,7 @@ namespace SecureOps.Controllers
             var dto = new UserDto
             {
                 Email = user.Email,
-                FullName = user.FullName,
+               // FullName = user.FullName,
                 Username = user.Username
             };
 
@@ -195,7 +201,7 @@ namespace SecureOps.Controllers
             var createdUser = new User
             {
                 Username = user.Username,
-                FullName = user.FullName,
+                
                 Email = user.Email,
                 CreatedAt = DateTime.UtcNow
             };

@@ -22,7 +22,7 @@ public class JwtService
         new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
         new Claim("Email", user.Email),
         new Claim("UserId", user.Id.ToString()),
-        new Claim("FullName", user.FullName),
+      //  new Claim("FullName", user.FullName),
         new Claim("Username", user.Username),
         new Claim("PasswordHash", user.PasswordHash),
    

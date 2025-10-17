@@ -328,7 +328,7 @@ else
         if (!string.IsNullOrEmpty(token))
         {
             employee = JwtHelper.DecodeTokenToEmployee(token);
-            User? currentUser = JwtHelper.DecodeTokenToUser(token);
+            UserDto? currentUser = JwtHelper.DecodeTokenToUser(token);
 
 
 

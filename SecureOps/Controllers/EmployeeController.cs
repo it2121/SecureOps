@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using SecureOps.Data;
 using SecureOps.Models;
 using SecureOps.Models.Dto;
+using System.Text.Json;
 
 namespace SecureOps.Controllers
 {
@@ -83,6 +84,63 @@ namespace SecureOps.Controllers
                 }
             });
         }
+
+        [HttpPost("UpsertEmployee")]
+        public async Task<IActionResult> UpsertEmployee([FromForm] string employeeDtoJson)
+        {
+            if (string.IsNullOrWhiteSpace(employeeDtoJson))
+                return BadRequest("Missing employee data.");
+
+            EmployeeDto? employeeDto;
+
+            try
+            {
+                employeeDto = JsonSerializer.Deserialize<EmployeeDto>(
+                    employeeDtoJson,
+                    new JsonSerializerOptions { PropertyNameCaseInsensitive = true }
+                );
+            }
+            catch (Exception ex)
+            {
+                return BadRequest($"Invalid JSON format: {ex.Message}");
+            }
+
+            if (employeeDto == null)
+                return BadRequest("Invalid employee object.");
+
+            // Look for existing employee
+            var existingEmployee = await _db.Employees
+                .Include(e => e.Department)
+                .FirstOrDefaultAsync(e => e.Id == employeeDto.Id);
+
+            if (existingEmployee != null)
+            {
+                // Update existing record
+                existingEmployee.FullName = employeeDto.FullName;
+                existingEmployee.Email = employeeDto.Email;
+                existingEmployee.PhoneNumber = employeeDto.PhoneNumber;
+
+            
+
+                _db.Employees.Update(existingEmployee);
+            }
+            else
+            {
+                // Insert new record
+                var newEmployee = new Employee
+                {
+                    FullName = employeeDto.FullName,
+                    Email = employeeDto.Email,
+                    PhoneNumber = employeeDto.PhoneNumber,
+                };
+
+                _db.Employees.Add(newEmployee);
+            }
+
+            await _db.SaveChangesAsync();
+            return Ok(new { success = true });
+        }
+
 
 
         [HttpPost("RegisterEmployee")]

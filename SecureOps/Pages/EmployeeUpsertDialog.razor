@@ -1,0 +1,163 @@
+﻿@using MudBlazor
+@using SecureOps.Models
+@using SecureOps.Models.Dto
+@using System.Text.Json
+@using System.Text
+@using MudBlazor.Extensions;
+@using MudBlazor.Extensions.Options;
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
+@inject ISnackbar Snackbar
+@inject IDialogService DialogService
+
+<MudDialog Class="custom-dialog blur dialog-background"
+           TitleClass="blur dialog-background-title"
+           ContentClass="dialog-background-surface py-10"
+           ActionsClass="dialog-background-surface">
+
+    <TitleContent>
+        <MudText Typo="Typo.h5">Profile</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudForm @ref="form" Class="mt-4">
+            <MudStack Spacing="3">
+                <MudPaper Class="pa-4  dialog-background-container">
+                    <MudTextField @bind-Value="employeeDto.FullName" Label="FullName"
+                                  Required="true" For="@(() => employeeDto.FullName)" />
+                </MudPaper>
+                <MudDivider />
+
+                <MudPaper Class="pa-4 dialog-background-container">
+                    <MudTextField @bind-Value="employeeDto.Email" Label="Email"
+                                  Required="true" For="@(() => employeeDto.Email)" />
+                </MudPaper>
+
+                <MudPaper Class="pa-4 dialog-background-container">
+                    <MudTextField @bind-Value="employeeDto.PhoneNumber" Label="PhoneNumber"
+                                  Required="true" For="@(() => employeeDto.PhoneNumber)" />
+                </MudPaper>
+
+
+             
+        
+
+            
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
+            Cancel
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
+            Save
+        </MudButton>
+    </DialogActions>
+</MudDialog>
+
+
+
+
+
+<style>
+    .custom-dialog {
+        width: 1300px !important;
+        max-width: 90vw;
+    }
+
+    .blur {
+        backdrop-filter: blur(10px);
+    }
+
+    .dialog-background {
+        background-color: transparent;
+    }
+
+    .dialog-background-title {
+        background: rgb(from var(--mud-palette-info-lighten) r g b / 50%);
+        color: var(--mud-palette-white);
+    }
+
+    .dialog-background-surface {
+        background: rgb(from var(--mud-palette-surface) r g b / 45%);
+    }
+
+    .dialog-background-container {
+        background: rgb(from var(--mud-palette-surface) r g b / 85%);
+    }
+
+</style>
+
+@code {
+
+
+
+
+
+    private MudMessageBox _mudMessageBox;
+    private bool _state = false;
+
+
+
+    [CascadingParameter] private IMudDialogInstance MudDialog { get; set; }
+    [Parameter] public int EmployeeId { get; set; }
+    //[Parameter] public int EmployeeId { get; set; }
+
+    private Employee employee;
+    private MudForm form;
+    private EmployeeDto employeeDto = new EmployeeDto();
+
+    private async void Submit()
+    {
+        await SaveemployeeDto();
+    }
+
+    private void Cancel() => MudDialog.Cancel();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var token = await LocalStorage.GetItemAsync<string>("authToken");
+        EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
+
+        if (EmployeeId != 0)
+        {
+            EmployeeDto tempemployeeDto = await Http.GetFromJsonAsync<EmployeeDto>(NavManager.BaseUri + $"api/Employee/GetEmployee?empId={EmployeeId}");
+            employeeDto = tempemployeeDto;
+
+
+        }
+        else
+        {
+        }
+    }
+
+    private async Task SaveemployeeDto()
+    {
+        await form.Validate();
+        if (!form.IsValid)
+            return;
+        bool okay = true;
+        employeeDto.Id = EmployeeId;
+        using var content = new MultipartFormDataContent();
+        var employeeDtoJson = new StringContent(JsonSerializer.Serialize(employeeDto), Encoding.UTF8, "application/json");
+        content.Add(employeeDtoJson, "employeeDtoJson");
+
+        var response = await Http.PostAsync(NavManager.BaseUri + "api/Employee/UpsertEmployee", content);
+        if (!response.IsSuccessStatusCode)
+        {
+            okay = false;
+        }
+
+
+
+
+
+
+        if (okay)
+        {
+            MudDialog.Close(DialogResult.Ok(true));
+        }
+    }
+}

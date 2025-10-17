@@ -9,15 +9,6 @@
 @inject ISnackbar Snackbar
 @inject JwtAuthenticationStateProvider AuthStateProvider
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
-@using MudBlazor
-@using SecureOps.Models
-@using SecureOps.Models.Dto
-@using SecureOps.Services.NewFolder
-@inject HttpClient Http
-@inject NavigationManager NavManager
-@inject ISnackbar Snackbar
-@inject JwtAuthenticationStateProvider AuthStateProvider
-@inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject IDialogService DialogService
 
 <MudContainer MaxWidth="MaxWidth.Large" Class="py-8">
@@ -46,6 +37,21 @@
                 </MudButton>
             </div>
         }
+        else if (employeeDto == null)
+        {
+            <div class="text-center py-8">
+                <MudIcon Icon="Icons.Material.Filled.Error" Size="Size.Large" Color="Color.Error" Class="mb-4" />
+                <MudText Typo="Typo.h5" Color="Color.Error" Class="mb-2">Profile Not Found</MudText>
+                <MudText Typo="Typo.body1" Color="Color.Secondary" Class="mb-6">
+                    Unable to load your profile data. Please try again.
+                </MudText>
+                <MudButton Variant="Variant.Filled" 
+                          Color="Color.Primary" 
+                          OnClick="ReloadProfile">
+                    Retry
+                </MudButton>
+            </div>
+        }
         else
         {
             <!-- Header Section -->
@@ -59,25 +65,27 @@
                                   Size="Size.Small"
                                   Variant="Variant.Filled"
                                   Class="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 shadow-md"
-                                   OnClick="@(() => OpenAvatarDialog())" />
+                                  OnClick="@(() => OpenAvatarDialog())" />
                 </div>
                 
                 <div class="text-center md:text-left flex-1">
-                    <MudText Typo="Typo.h4" Class="font-bold mb-1">@employeeDto.FullName</MudText>
-                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="mb-2">@employeeDto.Email</MudText>
-                    @foreach (Role role in GetUserRoles())
+                    <MudText Typo="Typo.h4" Class="font-bold mb-1">
+                        @(employeeDto?.FullName ?? "Unknown Name") 
+                    </MudText>
+                    <MudText Typo="Typo.subtitle1" Color="Color.Secondary" Class="mb-2">
+                        @(employeeDto?.Email ?? "No email provided") 
+                    </MudText>
+                    @if (user1?.Roles != null)
                     {
-                        <MudChip   Variant="Variant.Filled" 
-                                 Color="Color.Success" 
-                                 Size="Size.Small" T="string" >
-                            @role.RoleName
-                        </MudChip>
-
-
+                        @foreach (Role role in GetUserRoles())
+                        {
+                            <MudChip Variant="Variant.Filled" 
+                                   Color="Color.Success" 
+                                   Size="Size.Small" T="string">
+                                @role.RoleName
+                            </MudChip>
+                        }
                     }
-                 
-              
-                
                 </div>
             </div>
 
@@ -93,7 +101,9 @@
                                 <MudIcon Icon="@Icons.Material.Filled.Badge" Color="Color.Primary" />
                                 <div>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">Employee ID</MudText>
-                                    <MudText Typo="Typo.body1" Class="font-medium">@employeeDto.Id</MudText>
+                                    <MudText Typo="Typo.body1" Class="font-medium">
+                                        @(employeeDto?.Id.ToString() ?? "N/A") <!-- SAFE ACCESS -->
+                                    </MudText>
                                 </div>
                             </div>
                         </MudCardContent>
@@ -108,7 +118,7 @@
                                 <div>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">Phone</MudText>
                                     <MudText Typo="Typo.body1" Class="font-medium">
-                                        @(string.IsNullOrEmpty(employeeDto.PhoneNumber) ? "Not provided" : employeeDto.PhoneNumber)
+                                        @(string.IsNullOrEmpty(employeeDto?.PhoneNumber) ? "Not provided" : employeeDto.PhoneNumber)
                                     </MudText>
                                 </div>
                             </div>
@@ -125,7 +135,7 @@
                                 <div>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">Department</MudText>
                                     <MudText Typo="Typo.body1" Class="font-medium">
-                                        @(string.IsNullOrEmpty(employeeDto.Department.Name) ? "Not assigned" : employeeDto.Department.Name)
+                                        @(employeeDto?.Department?.Name ?? "Not assigned") <!-- SAFE NESTED ACCESS -->
                                     </MudText>
                                 </div>
                             </div>
@@ -141,7 +151,7 @@
                                 <div>
                                     <MudText Typo="Typo.caption" Color="Color.Secondary">Position</MudText>
                                     <MudText Typo="Typo.body1" Class="font-medium">
-                                        @(string.IsNullOrEmpty(employeeDto.JobTitle) ? "Not specified" : employeeDto.JobTitle)
+                                        @(string.IsNullOrEmpty(employeeDto?.JobTitle) ? "Not specified" : employeeDto.JobTitle)
                                     </MudText>
                                 </div>
                             </div>
@@ -174,13 +184,14 @@
                 <MudButton Variant="Variant.Outlined" 
                           Color="Color.Secondary" 
                           StartIcon="@Icons.Material.Filled.Download"
-                          OnClick="ExportProfile">
+                           OnClick="@(async () => await OpenEmployeeUpsertDialogAsync())">
+
                     Export Profile
                 </MudButton>
                 <MudButton Variant="Variant.Filled" 
                           Color="Color.Primary" 
                           StartIcon="@Icons.Material.Filled.Edit"
-                          OnClick="EditProfile">
+                          OnClick="@(async () => await OpenEmployeeUpsertDialogAsync())">
                     Edit Profile
                 </MudButton>
             </div>
@@ -188,55 +199,102 @@
     </MudPaper>
 </MudContainer>
 
-
 @code {
 
-    private bool showAvatarDialog = false;
-    private DialogOptions dialogOptions = new() { MaxWidth = MaxWidth.Small, FullWidth = true };
-    private async Task OpenAvatarDialog()
+
+
+    private async Task OpenEmployeeUpsertDialogAsync()
     {
-    
+
+        var options = new DialogOptions { CloseOnEscapeKey = true, CloseButton = true };
+
         var parameters = new DialogParameters
         {
             { "EmployeeId", employeeDto.Id } ,
+
+
             // pass the variable
         };
-        var options = new DialogOptions() { MaxWidth = MaxWidth.Small, CloseButton = true };
-        var dialog = await DialogService.ShowAsync<AvatarDialog>("Update Profile Picture", parameters, options);
+
+        var dialog = await DialogService.ShowAsync<EmployeeUpsertDialog>("Dialog", parameters, options);
+
+        // Wait for dialog to close and get result
         var result = await dialog.Result;
 
         if (!result.Canceled)
         {
 
-            // incidents = await Http.GetFromJsonAsync<List<Incident>>(NavManager.BaseUri + $"api/incident/GetIncidentsOfEmployee?EmpID={employee.Id}")
-            //  ?? new List<Incident>();
+            try
+            {
+                var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+                var user = authState.User;
+                var token = await LocalStorage.GetItemAsync<string>("authToken");
 
+                if (string.IsNullOrEmpty(token))
+                {
+                    Snackbar.Add("Authentication token not found", Severity.Error);
+                    isLoading = false;
+                    return;
+                }
 
+                user1 = JwtHelper.DecodeTokenToUser(token);
 
+                if (user1 == null)
+                {
+                    Snackbar.Add("Failed to decode user information", Severity.Error);
+                    isLoading = false;
+                    return;
+                }
 
+                var employeeIdClaim = user.FindFirst("employeeId")?.Value;
+                empExist = int.TryParse(employeeIdClaim, out var empId);
 
-            var returnedValue = result.Data;
+                if (empExist && empId > 0)
+                {
+                    employeeDto = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
 
-            // if (incidentId == 0)
-            // {
-            //     Snackbar.Add($"Incident added Successfully!", Severity.Success);
-            // }
-            // else
-            // {
-            //     Snackbar.Add($"Incident edited Successfully!", Severity.Success);
+                    if (employeeDto == null)
+                    {
+                        Snackbar.Add("Failed to load employee data", Severity.Warning);
+                        empExist = false;
+                    }
+                    else
+                    {
+                        avatarUrl = await new FilesHelper(NavManager.BaseUri, empId).GetAvatarUrlAsync();
 
-            // }
+                        // Set default avatar if none exists
+                        if (string.IsNullOrEmpty(avatarUrl))
+                        {
+                            avatarUrl = "/images/default-avatar.png";
+                        }
+                    }
+                }
+                else
+                {
+                    empExist = false;
+                }
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+                empExist = false;
+            }
+            finally
+            {
+                isLoading = false;
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+        else
+        {
             return;
         }
-       // DialogService.<AvatarDialog>("Update Profile Picture", parameters, options);
+
     }
 
-    private async Task HandleAvatarUploaded(string newAvatarUrl)
-    {
-        // Update your avatar URL and refresh the UI
-        avatarUrl = newAvatarUrl;
-        await InvokeAsync(StateHasChanged);
-    }
+
+
+
 
 
 
@@ -244,9 +302,9 @@
     private bool isLoading = true;
     private bool empExist = false;
     private string? avatarUrl;
-    private bool ShowAvatarDialog = false;
     private DateTime lastUpdated = DateTime.Now;
-    User user1;
+    private UserDto? user1; // Make nullable
+    
     protected override async Task OnInitializedAsync()
     {
         try
@@ -254,19 +312,44 @@
             var authState = await AuthStateProvider.GetAuthenticationStateAsync();
             var user = authState.User;
             var token = await LocalStorage.GetItemAsync<string>("authToken");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                Snackbar.Add("Authentication token not found", Severity.Error);
+                isLoading = false;
+                return;
+            }
+
             user1 = JwtHelper.DecodeTokenToUser(token);
+
+            if (user1 == null)
+            {
+                Snackbar.Add("Failed to decode user information", Severity.Error);
+                isLoading = false;
+                return;
+            }
+
             var employeeIdClaim = user.FindFirst("employeeId")?.Value;
             empExist = int.TryParse(employeeIdClaim, out var empId);
 
             if (empExist && empId > 0)
             {
                 employeeDto = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
-                avatarUrl = await new FilesHelper(NavManager.BaseUri, empId).GetAvatarUrlAsync();
 
-                // Set default avatar if none exists
-                if (string.IsNullOrEmpty(avatarUrl))
+                if (employeeDto == null)
                 {
-                    avatarUrl = "/images/default-avatar.png";
+                    Snackbar.Add("Failed to load employee data", Severity.Warning);
+                    empExist = false;
+                }
+                else
+                {
+                    avatarUrl = await new FilesHelper(NavManager.BaseUri, empId).GetAvatarUrlAsync();
+
+                    // Set default avatar if none exists
+                    if (string.IsNullOrEmpty(avatarUrl))
+                    {
+                        avatarUrl = "/images/default-avatar.png";
+                    }
                 }
             }
             else
@@ -277,44 +360,93 @@
         catch (Exception ex)
         {
             Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+            empExist = false;
         }
         finally
         {
             isLoading = false;
-            StateHasChanged();
+            await InvokeAsync(StateHasChanged);
         }
     }
 
     private List<Role> GetUserRoles()
     {
+        var roles = new List<Role>();
 
-        List<Role> roles = new List<Role>();
-        // Implement based on your role system
-        foreach(var role in user1.Roles)
+        if (user1?.Roles != null)
         {
-            roles.Add(role);
+            foreach (var role in user1.Roles)
+            {
+                if (role != null)
+                {
+                    roles.Add(role);
+                }
+            }
         }
-        return roles ;
+
+        return roles;
     }
 
-    // private string GetRoleIcon()
-    // {
-    //     return GetUserRole() switch
-    //     {
-    //         "Admin" => Icons.Material.Filled.AdminPanelSettings,
-    //         "Manager" => Icons.Material.Filled.SupervisorAccount,
-    //         _ => Icons.Material.Filled.Person
-    //     };
-    // }
+    private async Task OpenAvatarDialog()
+    {
+        if (employeeDto == null)
+        {
+            Snackbar.Add("Employee data not available", Severity.Warning);
+            return;
+        }
 
+        var parameters = new DialogParameters
+        {
+            { "EmployeeId", employeeDto.Id }
+        };
 
+        var options = new DialogOptions() { MaxWidth = MaxWidth.Small, CloseButton = true };
+        var dialog = await DialogService.ShowAsync<AvatarDialog>("Update Profile Picture", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            // Refresh avatar after update
+            if (employeeDto != null)
+            {
+                avatarUrl = await new FilesHelper(NavManager.BaseUri, employeeDto.Id).GetAvatarUrlAsync();
+                if (string.IsNullOrEmpty(avatarUrl))
+                {
+                    avatarUrl = "/images/default-avatar.png";
+                }
+                await InvokeAsync(StateHasChanged);
+            }
+        }
+    }
+
+    private async Task ReloadProfile()
+    {
+        isLoading = true;
+        StateHasChanged();
+
+        await Task.Delay(100); // Small delay for UI update
+        await OnInitializedAsync();
+    }
 
     private void ExportProfile()
     {
-        // Implement profile export logic
+        if (employeeDto == null)
+        {
+            Snackbar.Add("No profile data to export", Severity.Warning);
+            return;
+        }
         Snackbar.Add("Profile export feature coming soon!", Severity.Info);
     }
 
-    private void EditProfile() => NavManager.NavigateTo("/edit-profile");
+    private void EditProfile()
+    {
+        if (employeeDto == null)
+        {
+            Snackbar.Add("Cannot edit - profile not loaded", Severity.Warning);
+            return;
+        }
+        NavManager.NavigateTo("/edit-profile");
+    }
+
     private void GoToEmployeeSetup() => NavManager.NavigateTo("/employee-setup");
 }

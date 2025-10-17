@@ -45,7 +45,7 @@ public static class SeedData
             var user = new User
             {
                 Username = $"user{i}",
-                FullName = $"Employee {i}",
+               
                 Email = $"employee{i}@company.com",
                 PasswordHash = BCrypt.Net.BCrypt.HashPassword($"Pass{i}123!"),
             };
@@ -62,7 +62,7 @@ public static class SeedData
         {
             var employee = new Employee
             {
-                FullName = users[i].FullName,
+                FullName = $"Employee {i}",
                 Email = users[i].Email,
                 JobTitle = (i + 1) % 2 == 0 ? "Engineer" : "Manager",
                 UserId = users[i].Id // set FK

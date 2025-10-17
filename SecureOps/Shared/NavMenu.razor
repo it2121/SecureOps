@@ -2,6 +2,7 @@
 @using MudBlazor
 @using SecureOps.Data
 @using SecureOps.Models
+@using SecureOps.Models.Dto
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
 @inject HttpClient Http
@@ -71,7 +72,7 @@
     private bool IsAuthorized { get; set; } = false;
     private bool IsAdmin { get; set; } = false;
 
-    private User currentUser;
+    private UserDto currentUser;
     private Employee currentEmp;
     [CascadingParameter(Name = "DarkMode")]
     public bool DarkMode { get; set; }

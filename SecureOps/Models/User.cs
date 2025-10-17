@@ -12,9 +12,9 @@ namespace SecureOps.Models
         [Required]
         [MaxLength(100)]
         public string Username { get; set; }
-        [Required]
-        [MaxLength(100)]
-        public string FullName { get; set; }
+        //[Required]
+        //[MaxLength(100)]
+        //public string FullName { get; set; }
 
         [Required]
         [MaxLength(255)]
