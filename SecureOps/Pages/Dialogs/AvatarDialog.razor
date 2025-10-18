@@ -1,5 +1,9 @@
 ﻿@using MudBlazor
+@using System.Text.Json
+@using System.Text
 @inject ISnackbar Snackbar
+@inject HttpClient Http
+@inject NavigationManager NavManager
 
 <MudDialog>
     <TitleContent>
@@ -126,10 +130,39 @@
             // }
 
             // Simulate upload delay
-            await Task.Delay(1000);
+          
+            // Build the DTO object
+            var dto = new { Id = EmployeeId };
+            var dtoJson = JsonSerializer.Serialize(dto);
 
-            Snackbar.Add("Avatar updated successfully!", Severity.Success);
-            MudDialog.Close(DialogResult.Ok(true));
+            // Prepare the form content
+            using var content = new MultipartFormDataContent();
+
+            // Add JSON DTO
+            content.Add(new StringContent(dtoJson, Encoding.UTF8, "application/json"), "EmpDtoWithIdJson");
+
+            // Add the file
+            var fileContent = new StreamContent(selectedFile.OpenReadStream(10 * 1024 * 1024));
+            fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(selectedFile.ContentType);
+            content.Add(fileContent, "file", selectedFile.Name);
+
+            // Send POST request to your API
+            using var httpClient = new HttpClient();
+            var response = await Http.PostAsync(NavManager.BaseUri + "api/Employee/SetAvatar", content);
+
+            if (response.IsSuccessStatusCode)
+            {
+                Snackbar.Add("Avatar updated successfully!", Severity.Success);
+
+               
+
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Snackbar.Add($"Upload failed: {error}", Severity.Error);
+            }
         }
         catch (Exception ex)
         {

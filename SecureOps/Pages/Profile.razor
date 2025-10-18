@@ -56,17 +56,30 @@
         {
             <!-- Header Section -->
             <div class="flex flex-col md:flex-row items-center gap-6 mb-6">
-                <div class="relative">
-                    <MudAvatar Size="Size.Large" Elevation="8" Class="rounded-full border-1 border-white shadow-lg">
-                        <MudImage Src="@avatarUrl" Class="rounded-full" Height="120" Width="120" />
-                    </MudAvatar>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit" 
-                                  Color="Color.Primary" 
-                                  Size="Size.Small"
-                                  Variant="Variant.Filled"
-                                  Class="absolute bottom-0 right-0 transform translate-x-1/4 translate-y-1/4 shadow-md"
-                                  OnClick="@(() => OpenAvatarDialog())" />
-                </div>
+                <MudGrid Justify="Justify.Center">
+                    <MudItem xs="12" sm="6" md="4" Class="d-flex justify-center">
+                        <div class="position-relative">
+
+
+                            <MudAvatar Size="Size.Large"
+                                   
+                                       Class="mx-auto elevation-3"
+                                       Style="width: 180px; height: 180px; border: 2px solid #ccc;" >
+
+                                <MudImage ObjectFit="ObjectFit.Cover" Src="@avatarUrl" Class="rounded-full" />
+                                   
+                                   </MudAvatar>
+
+
+                            <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Class="position-absolute"
+                                           Style="bottom: 10px; right: 10px; background-color: white;"
+                                           OnClick="@(() => OpenAvatarDialog())" />
+                        </div>
+                    </MudItem>
+                </MudGrid>
                 
                 <div class="text-center md:text-left flex-1">
                     <MudText Typo="Typo.h4" Class="font-bold mb-1">

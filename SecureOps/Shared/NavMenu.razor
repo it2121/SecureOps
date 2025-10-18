@@ -3,21 +3,78 @@
 @using SecureOps.Data
 @using SecureOps.Models
 @using SecureOps.Models.Dto
+@using SecureOps.Services.NewFolder
 @inject SignInManager<ApplicationUser> SignInManager
 @inject NavigationManager Navigation
 @inject HttpClient Http
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject NavigationManager NavManager
+@inject HttpClient Http
+@inject NavigationManager NavManager
+@inject ISnackbar Snackbar
+@inject JwtAuthenticationStateProvider AuthStateProvider
+<MudAppBar  Elevation="3"  Dense="true">
+    <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
+    <MudSpacer />
 
-    <MudAppBar  Elevation="3"  Dense="true">
-        <MudIconButton Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" OnClick="@ToggleDrawer" />
-        <MudSpacer />
+    @if(currentUser!=null)
+    {
+        <MudText Style="margin-right:1rem;" Typo="Typo.body1" Class="mr-2">
+            @currentUser?.FullName
+
+        </MudText>
+        <MudMenu Dense="true"
+        Elevation="8"
+        AnchorOrigin="Origin.BottomLeft"
+        OffsetY="true"
+        Rounded="true">
+            <ActivatorContent>
+
+
+                <MudAvatar Size="Size.Large"
+                Class="mx-auto elevation-3"
+                Style="width: 40px; height: 40px; border: 2px solid #ccc;">
+                    <MudImage ObjectFit="ObjectFit.Cover" Src="@avatarUrl" Class="rounded-full" />
+                </MudAvatar>
+            </ActivatorContent>
+
+            <ChildContent>
+                <MudMenuItem Icon="@Icons.Material.Filled.AccountCircle" Href="/profile">
+                    Profile
+
+                </MudMenuItem>
+
+                <MudMenuItem Icon="@Icons.Material.Filled.DarkMode">
+                    Theme
+                </MudMenuItem>
+
+                <MudMenuItem Icon="@Icons.Material.Filled.BarChart">
+                    Usage
+                </MudMenuItem>
+
+                <MudDivider />
+
+                <MudMenuItem @onclick="Logout" Icon="@Icons.Material.Filled.Logout" Color="Color.Error">
+                    Logout
+                </MudMenuItem>
+            </ChildContent>
+        </MudMenu>
+
+    }else
+    {
+              <AuthorizeView>
+            <NotAuthorized>
+                <MudButton Href="/login" StartIcon="@Icons.Material.Filled.Login">Login</MudButton>
+                <MudButton Href="/register" StartIcon="@Icons.Material.Filled.Add">Register</MudButton>
+
+            </NotAuthorized>
+        </AuthorizeView>
+    }
 
 
 
 
-
-    </MudAppBar>
+</MudAppBar>
 <MudDrawer @bind-Open="@_open" ClipMode="@DrawerClipMode.Docked" Breakpoint="@Breakpoint.None" Elevation="1" Variant=_openBuddy>
     <MudNavMenu Color="Color.Success"  Class="d-flex flex-column h-100">
 
@@ -28,7 +85,7 @@
             <MudNavLink Match="NavLinkMatch.All" Href="/Getfullname" Icon="@Icons.Material.Filled.PermIdentity">Getfullname</MudNavLink>
             <MudNavLink Match="NavLinkMatch.All" Href="/Tester" Icon="@Icons.Material.Filled.Work">Tester</MudNavLink>
 
-   
+
         </MudNavGroup>
 
 
@@ -43,15 +100,15 @@
             <MudNavLink Match="NavLinkMatch.All" Href="/Incidents" Icon="@Icons.Material.Filled.AddReaction">Incidents</MudNavLink>
 
             @if (IsAuthorized)
-{
-            <MudNavLink Match="NavLinkMatch.All" Href="/SDocument" Icon="@Icons.Material.Filled.AddReaction">Document</MudNavLink>
+            {
+                <MudNavLink Match="NavLinkMatch.All" Href="/SDocument" Icon="@Icons.Material.Filled.AddReaction">Document</MudNavLink>
                 <MudNavLink Match="NavLinkMatch.All" Href="/UserManagment" Icon="@Icons.Material.Filled.VerifiedUser">User Managment</MudNavLink>
-}
-        
+            }
+
         </AuthorizeView>
         <AuthorizeView>
-    <NotAuthorized>
-        <MudNavLink Match="NavLinkMatch.All" Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
+            <NotAuthorized>
+                <MudNavLink Match="NavLinkMatch.All" Href="/login" Icon="@Icons.Material.Filled.Login">Login</MudNavLink>
                 <MudNavLink Match="NavLinkMatch.All" Href="/register" Icon="@Icons.Material.Filled.Add">Register</MudNavLink>
 
             </NotAuthorized>
@@ -59,10 +116,10 @@
 
         <MudSpacer />
         <AuthorizeView>
-        <MudNavLink Match="NavLinkMatch.All" @onclick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudNavLink>
+            <MudNavLink Match="NavLinkMatch.All" @onclick="Logout" Icon="@Icons.Material.Filled.Logout">Logout</MudNavLink>
         </AuthorizeView>
-        </MudNavMenu>
-    </MudDrawer>
+    </MudNavMenu>
+</MudDrawer>
 
 
 
@@ -82,6 +139,8 @@
     private bool _dense = false;
     private Breakpoint _breakpoint = Breakpoint.Lg;
     private DrawerClipMode _clipMode = DrawerClipMode.Never;
+    string avatarUrl;
+    EmployeeDto employeeDto = new EmployeeDto();
     protected override async Task OnInitializedAsync()
     {
         var token = await LocalStorage.GetItemAsync<string>("authToken");
@@ -101,7 +160,81 @@
 
             IsAdmin = currentUser.Roles.Any(r =>
                 r.RoleName.Equals("Admin", StringComparison.OrdinalIgnoreCase));
-        }
+        
+            
+            try
+            {
+
+
+
+
+                if (currentUser.Id > 0)
+                {
+                    employeeDto = await JwtHelper.DecodeFromDatabaseTokenToEmployeeAsync(token, Http, NavManager.BaseUri);
+
+                    if (employeeDto == null)
+                    {
+                        Snackbar.Add("Failed to load employee data", Severity.Warning);
+
+                    }
+                    else
+                    {
+                        avatarUrl = await new FilesHelper(NavManager.BaseUri, employeeDto.Id).GetAvatarUrlAsync();
+
+                        // Set default avatar if none exists
+                        if (string.IsNullOrEmpty(avatarUrl))
+                        {
+                            avatarUrl = "/images/default-avatar.png";
+                        }
+                    }
+                }
+
+            }
+            catch (Exception ex)
+            {
+                Snackbar.Add($"Failed to load profile: {ex.Message}", Severity.Error);
+
+            }
+            finally
+            {
+
+                await InvokeAsync(StateHasChanged);
+            }
+
+            
+            
+            
+            
+            
+            }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
 
     }
     private void ToggleDrawer()

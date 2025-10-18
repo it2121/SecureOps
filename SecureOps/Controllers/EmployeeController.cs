@@ -20,6 +20,62 @@ namespace SecureOps.Controllers
             _db = db;
         }
 
+
+        [HttpPost("SetAvatar")]
+        public async Task<IActionResult> SetAvatar([FromForm] string EmpDtoWithIdJson, [FromForm] IFormFile file)
+        {
+            try
+            {
+                var dto = JsonSerializer.Deserialize<EmployeeDto>(EmpDtoWithIdJson);
+
+                if (dto == null || file == null)
+                    return BadRequest("Invalid employee data or file.");
+
+                var existingEmp = await _db.Employees.FindAsync(dto.Id);
+                if (existingEmp is null)
+                    return NotFound("Employee not found.");
+
+                // Define folder path for this employee
+                string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Avatars", dto.Id.ToString());
+
+                // Create folder if it doesn’t exist
+                if (!Directory.Exists(folderPath))
+                    Directory.CreateDirectory(folderPath);
+
+                // Delete all existing files inside the folder
+                foreach (var oldFile in Directory.GetFiles(folderPath))
+                {
+                    System.IO.File.Delete(oldFile);
+                }
+
+                // Get file extension (.jpg, .png, etc.)
+                string fileExtension = Path.GetExtension(file.FileName);
+
+                // Create new file name
+                string fileName = $"avatar-{dto.Id}{fileExtension}";
+                string filePath = Path.Combine(folderPath, fileName);
+
+                // Save the new file asynchronously
+                await using (var fs = new FileStream(filePath, FileMode.Create))
+                {
+                    await file.CopyToAsync(fs);
+                }
+
+            
+
+                return Ok(new { message = "Avatar updated successfully" });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Error setting avatar", details = ex.Message });
+            }
+        }
+
+
+
+
+
+
         [HttpGet("GetEmployee")]
         public async Task<EmployeeDto> GetEmployee([FromQuery] int empId)
         {
