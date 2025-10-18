@@ -4,6 +4,7 @@ namespace SecureOps.Models
 {
     public class SDocument
     {
+        [Key]
         public int Id { get; set; }
 
         [Required, MaxLength(200)]
@@ -30,10 +31,24 @@ namespace SecureOps.Models
         public bool IsConfidential { get; set; } = false;
 
         // Categorization
+        [MaxLength(100)]
         public string? Category { get; set; }
-        public string? Tags { get; set; } // comma separated or later turned into related table
 
-        // Relationship → Many acknowledgements
+        [MaxLength(500)]
+        public string? Tags { get; set; } // comma-separated, can later convert to separate table
+
+        // Multi-tenancy
+        public int CompanyId { get; set; }
+        public Company? Company { get; set; }
+
+        // Optional relationships
         public ICollection<EmployeeDocumentAcknowledgement>? Acknowledgements { get; set; }
+
+        // Optional: Related Incidents or Tasks
+        public int? RelatedIncidentId { get; set; }
+        public Incident? RelatedIncident { get; set; }
+
+        public int? RelatedTaskId { get; set; }
+        public SafetyTask? RelatedTask { get; set; }
     }
 }

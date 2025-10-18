@@ -154,7 +154,7 @@ namespace SecureOps.Controllers
 
                     Status = Dto.Status,
 
-                    ReportedAt  = Dto.ReportedAt,
+                    ReportedAt  = (DateTime)Dto.ReportedAt,
                     EmployeeId = Dto.EmpId
 
 
@@ -230,7 +230,7 @@ namespace SecureOps.Controllers
                     existingIncident.Description = dto.Description;
                     existingIncident.PhotoPath = dto.PhotoPath;
                     existingIncident.Status = dto.Status;
-                    existingIncident.ReportedAt = dto.ReportedAt;
+                    existingIncident.ReportedAt = (DateTime)dto.ReportedAt;
                     existingIncident.EmployeeId = dto.EmpId;
 
                     _db.Incidents.Update(existingIncident);
@@ -287,7 +287,7 @@ namespace SecureOps.Controllers
                         Description = dto.Description,
                         PhotoPath = dto.PhotoPath,
                         Status = dto.Status,
-                        ReportedAt = dto.ReportedAt,
+                        ReportedAt = (DateTime)dto.ReportedAt,
                         EmployeeId = dto.EmpId
                     };
 
