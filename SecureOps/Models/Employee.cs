@@ -18,7 +18,7 @@ namespace SecureOps.Models
         public string? PhoneNumber { get; set; }
 
         [MaxLength(50)]
-        public string? JobTitle { get; set; }
+        public string? JobTitle { get; set; } = "Not Set";
 
         [MaxLength(100)]
         public string? EmployeeCode { get; set; } // Optional unique code/id

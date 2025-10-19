@@ -17,6 +17,7 @@ namespace SecureOps.Data
         public DbSet<Incident> Incidents { get; set; } = null!;
         public DbSet<SDocument> SDocuments { get; set; } = null!;
         public DbSet<EmployeeDocumentAcknowledgement> EmployeeDocumentAcknowledgements { get; set; } = null!;
+        public DbSet<Company> Companies { get; set; } = null!;
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
