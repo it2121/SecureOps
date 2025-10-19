@@ -37,7 +37,7 @@ public class AuthController : ControllerBase
     {
         var user = _db.Users
      .Include(u => u.Roles)  // <-- load roles
-         .Include(u => u.Employee) // <-- important
+         .Include(u => u.Employee).Include(u => u.Company) // <-- important
 
      .FirstOrDefault(u => u.Email == request.Email);
 
@@ -47,8 +47,9 @@ public class AuthController : ControllerBase
             return Unauthorized();
         var roles = user.Roles.Select(r => r.RoleName).ToList();
         var employee = user.Employee;
+        var company = user.Company;
 
-        var token = _jwt.GenerateToken(user, roles, employee);
+        var token = _jwt.GenerateToken(user, roles, employee, company);
 
         return Ok(new { token }); // <-- return fullName
 

@@ -1,0 +1,30 @@
+﻿@using System.Reflection
+@using MudBlazor
+@typeparam TModel
+
+@if (Model == null)
+{
+    <MudText Color="Color.Secondary">No data to display</MudText>
+}
+else
+{
+    <MudPaper Class="p-4 rounded-lg w-fit" Elevation="1" >
+        <MudText Typo="Typo.h6" Class="mb-2">Details</MudText>
+
+        <MudList T="object"  Dense="true">
+            @foreach (var prop in typeof(TModel).GetProperties(BindingFlags.Public | BindingFlags.Instance))
+            {
+                var value = prop.GetValue(Model);
+                <MudListItem >
+                    <MudText Size="Size.Small" Class="font-semibold w-48 small">@prop.Name</MudText>
+                    <MudText>@(value ?? "-")</MudText>
+                </MudListItem>
+                <MudDivider />
+            }
+        </MudList>
+    </MudPaper>
+}
+
+@code {
+    [Parameter] public TModel? Model { get; set; }
+}

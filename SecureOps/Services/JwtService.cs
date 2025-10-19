@@ -15,7 +15,7 @@ public class JwtService
         var identity = new ClaimsIdentity(jwt.Claims, "jwt");
         return new ClaimsPrincipal(identity);
     }
-    public string GenerateToken(User user, List<string> roles,Employee employee)
+    public string GenerateToken(User user, List<string> roles,Employee employee ,Company company)
     { // Build all claims including roles
         var claims = new List<Claim>
     {
@@ -31,6 +31,31 @@ public class JwtService
 
     };
 
+        if (company != null)
+        {
+
+            if (company.Id != 0)
+                claims.Add(new Claim("CompanyId", company.Id.ToString()));
+
+            if (!string.IsNullOrWhiteSpace(company.Name))
+                claims.Add(new Claim("CompanyName", company.Name));
+
+            if (!string.IsNullOrWhiteSpace(company.Address))
+                claims.Add(new Claim("CompanyAddress", company.Address));
+
+            if (!string.IsNullOrWhiteSpace(company.City))
+                claims.Add(new Claim("CompanyCity", company.City));
+
+            if (!string.IsNullOrWhiteSpace(company.Country))
+                claims.Add(new Claim("CompanyCountry", company.Country));
+
+            if (!string.IsNullOrWhiteSpace(company.IndustryType))
+                claims.Add(new Claim("CompanyIndustryType", company.IndustryType));
+
+            if (!string.IsNullOrWhiteSpace(company.SubscriptionPlan))
+                claims.Add(new Claim("CompanySubscriptionPlan", company.SubscriptionPlan));
+
+        }
         if (employee != null)
         {
             if (employee.Id != 0)

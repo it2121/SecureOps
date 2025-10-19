@@ -53,9 +53,11 @@ public class JwtAuthenticationStateProvider : AuthenticationStateProvider
 
         // Map role claims explicitly if needed
         // Map role claims to ClaimTypes.Role
+
         var roleClaims = claims
             .Where(c => c.Type.Equals("role", StringComparison.OrdinalIgnoreCase))
             .Select(c => new Claim(ClaimTypes.Role, c.Value));
+
 
         var allClaims = claims
             .Where(c => !c.Type.Equals("role", StringComparison.OrdinalIgnoreCase))

@@ -13,6 +13,30 @@ using static System.Net.WebRequestMethods;
 
 public static class JwtHelper
 {
+    public static CompanyDto DecodeTokenToCompany (string token)
+    {
+        if (string.IsNullOrEmpty(token)) return null;
+
+        var handler = new JwtSecurityTokenHandler();
+        var jwtToken = handler.ReadJwtToken(token);
+
+        var company = new CompanyDto
+        {
+
+            Id = Convert.ToInt32( jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyId")?.Value),
+            Name = jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyName")?.Value,
+            Address = jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyAddress")?.Value,
+            City = jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyCity")?.Value,
+            Country = jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyCountry")?.Value,
+            IndustryType = jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyIndustryType")?.Value,
+            SubscriptionPlan = jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanySubscriptionPlan")?.Value,
+
+
+        };
+
+
+        return company;
+    }
     public static UserDto DecodeTokenToUser(string token)
     {
         if (string.IsNullOrEmpty(token)) return null;
@@ -26,13 +50,16 @@ public static class JwtHelper
                     ?? jwtToken.Claims.FirstOrDefault(c => c.Type == JwtRegisteredClaimNames.Sub)?.Value,
             FullName = jwtToken.Claims.FirstOrDefault(c => c.Type == "employeeFullName")?.Value,
             Id = Convert.ToInt32(jwtToken.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value),
+            CompanyId = Convert.ToInt32(jwtToken.Claims.FirstOrDefault(c => c.Type == "CompanyId")?.Value),
             Username = jwtToken.Claims.FirstOrDefault(c => c.Type == "Username")?.Value,
 
             Roles = jwtToken.Claims
                             .Where(c => c.Type == ClaimTypes.Role || c.Type == "role")
                             .Select(c => new Role { RoleName = c.Value })
-                            .ToList()
+                            .ToList(),
+            
         };
+       
 
         return user;
     }

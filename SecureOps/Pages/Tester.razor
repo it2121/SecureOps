@@ -1,7 +1,9 @@
 ﻿@page "/Tester"
 @using System.Security.Claims
+@using MudBlazor
 @using SecureOps.Models
 @using SecureOps.Models.Dto
+@using SecureOps.Pages.Componenrs
 @inject AuthenticationStateProvider AuthStateProvider
 @inject Blazored.LocalStorage.ILocalStorageService LocalStorage
 @inject NavigationManager NavManager
@@ -11,6 +13,56 @@
 
 @if (claims != null)
 {
+
+
+    <MudGrid>
+        <MudItem xs="3">
+            <MudCard Class="p-4">
+                <MudText Typo="Typo.h5">Company Details</MudText>
+                <ModelViewer TModel="CompanyDto" Model="@companyDto" />
+            </MudCard>
+        </MudItem>
+
+        <MudItem xs="3">
+            <MudCard Class="p-4">
+                <MudText Typo="Typo.h5">Employee Details</MudText>
+                <ModelViewer TModel="EmployeeDto" Model="@employee" />
+            </MudCard>
+        </MudItem>
+        <MudItem xs="3">
+            <MudCard Class="p-4">
+                <MudText Typo="Typo.h5">user Details</MudText>
+                <ModelViewer TModel="UserDto" Model="@userDto" />
+            </MudCard>
+        </MudItem>
+        <MudItem xs="3">
+            <MudCard Class="p-4">
+
+                <h4>Roles</h4>
+                <ul>
+                    @foreach (var role in userDto.Roles)
+                    {
+                        <li>@role.RoleName</li>
+                    }
+                </ul>
+
+            </MudCard>
+        </MudItem>
+    </MudGrid>
+
+
+
+ 
+
+
+
+
+
+    
+
+
+
+
     <ul>
         @foreach (var claim in claims)
         {
@@ -18,13 +70,7 @@
         }
     </ul>
 
-    <h4>Roles</h4>
-    <ul>
-        @foreach (var role in roles)
-        {
-            <li>@role</li>
-        }
-    </ul>
+ 
     <h4>Employee</h4>
     <ul>
         @if (empExist){
@@ -53,13 +99,18 @@ else
     private IEnumerable<string> roles;
     bool empExist = false;
     EmployeeDto employee;
+    UserDto userDto;
+    CompanyDto companyDto;
     protected override async Task OnInitializedAsync()
     {
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         var token = await LocalStorage.GetItemAsync<string>("authToken");
         var employeeIdClaim = user.FindFirst("employeeId")?.Value;
-         empExist = int.TryParse(employeeIdClaim, out var empId);
+         companyDto = JwtHelper.DecodeTokenToCompany(token);
+        userDto = JwtHelper.DecodeTokenToUser(token);
+
+        empExist = int.TryParse(employeeIdClaim, out var empId);
 
 
         if (empExist)
@@ -80,5 +131,6 @@ else
             roles = user.FindAll(ClaimTypes.Role).Select(c => c.Value);
 
         }
+
     }
 }
