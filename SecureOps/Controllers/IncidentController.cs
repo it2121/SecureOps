@@ -40,6 +40,18 @@ namespace SecureOps.Controllers
             _pdfService = pdfService;
 
         }
+
+
+        [HttpGet("{id}/ViewPdf")]
+        public IActionResult GetIncidentPdf(int id)
+        {
+            var incident = _db.Incidents.Include(i => i.Employee).FirstOrDefault(i => i.Id == id);
+            if (incident == null) return NotFound();
+
+            var pdfBytes = _pdfService.GenerateIncidentReport(incident);
+            return File(pdfBytes, "application/pdf");
+        }
+
         [HttpGet("{id}/pdf")]
         public async Task<IActionResult> GenerateIncidentPdf(int id)
         {
@@ -179,6 +191,7 @@ namespace SecureOps.Controllers
            Title = i.Title,
            Description = i.Description,
            Status = i.Status,
+           Severity = i.Severity,
            ReportedAt = i.ReportedAt
        })
        .ToListAsync();
@@ -286,7 +299,7 @@ namespace SecureOps.Controllers
                     existingIncident.Status = dto.Status;
                     existingIncident.Severity = dto.Severity;
                     existingIncident.ReportedAt = (DateTime)dto.ReportedAt;
-                    existingIncident.ResolvedAt = (DateTime)dto.ResolvedAt;
+                    existingIncident.ResolvedAt = dto.ResolvedAt ?? existingIncident.ResolvedAt;
                     existingIncident.EmployeeId = dto.EmpId;
                     existingIncident.UpdatedAt = DateTime.UtcNow;
                     _db.Incidents.Update(existingIncident);

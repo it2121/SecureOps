@@ -1,4 +1,6 @@
-﻿@using MudBlazor
+﻿@using Gotho.BlazorPdf
+@using Gotho.BlazorPdf.Config
+@using MudBlazor
 @using SecureOps.Models
 @using SecureOps.Models.Dto
 @using System.Text.Json
@@ -11,162 +13,161 @@
 @inject ISnackbar Snackbar
 @inject IDialogService DialogService
 
-<MudDialog Class="custom-dialog blur dialog-background"
-TitleClass="blur dialog-background-title"
-ContentClass="dialog-background-surface py-10"
-ActionsClass="dialog-background-surface">
+<MudDialog MaxWidth="MaxWidth.ExtraLarge" FullWidth="true" Class="custom-dialog blur dialog-background">
 
     <TitleContent>
-        <MudText Typo="Typo.h5">Incident</MudText>
+        <MudText Typo="Typo.h5">Incident Details </MudText>
     </TitleContent>
+
     <DialogContent>
-        <MudForm @ref="form" Class="mt-4">
-            <MudStack Spacing="3">
-
-                @if ((incident.Status.ToString().Equals("In Progress")
-                || incident.Status.ToString().Equals("Reported")
-                ) && IncidentId != 0){
-                
-                <MudStack Row="true" Justify="Justify.FlexEnd">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               StartIcon="@Icons.Material.Filled.Check"
-                                   OnClick="VerifyIncident">
-                            Verifie
-                    </MudButton>
-                </MudStack>
-    
-                }   @if ((incident.Status.ToString().Equals("In Progress")
-                || incident.Status.ToString().Equals("Reported")
-                || incident.Status.ToString().Equals("Verified")
-                )&& IncidentId!=0
-                )
+        <MudStack Row="true" Spacing="4">
+            <!-- Left: PDF Viewer -->
+            @if(ShowPdf){
+            <MudItem xs="12" sm="6" Class="pa-2">
+                @if (!string.IsNullOrEmpty(PdfUrl))
                 {
-                <MudStack Row="true" Justify="Justify.FlexEnd">
-                    <MudButton Variant="Variant.Filled"
-                               Color="Color.Warning"
-                               StartIcon="@Icons.Material.Filled.Check"
-                                OnClick="ResolvedIncedent"
-                    >
-                        Resolved The Incident
-                    </MudButton>
-                </MudStack>
-    
+              
+                    <PdfViewer  Colors="PdfColors" Url="@PdfUrl" Height="700px" />
                 }
-                <MudPaper Class="pa-4  dialog-background-container">
-                    <MudTextField @bind-Value="incident.Title" Label="Title"
-                    Required="true" For="@(() => incident.Title)" />
-                </MudPaper>
-                <MudDivider />
+                else
+                {
+                    <MudPaper Class="pa-4 d-flex justify-center align-center" Style="height:700px">
+                        <MudText Typo="Typo.subtitle1" Align="Align.Center">PDF Preview will appear here</MudText>
+                    </MudPaper>
+                }
+                
+            </MudItem>
+            }
+            <!-- Right: Form -->
 
-                <MudPaper Class="pa-4 dialog-background-container">
-                    <MudTextField @bind-Value="incident.Description" Label="Description"
-                    Required="true" For="@(() => incident.Description)" />
-                </MudPaper>
+            <MudItem xs="12" sm="@(ShowPdf ? 6 : 12)">
+                <MudForm @ref="form" Class="mt-0">
+                    <MudStack Spacing="3">
 
-                <MudGrid>
-                    @if (incident.ResolvedAt.ToString().Length > 0)
-                    {
-
-                    <MudItem xs="6">
-                        <MudPaper Class="pa-4 dialog-background-container">
-                            <MudDatePicker Label="Resolved at"
-                            Required="true" ShowWeekNumbers="true" @bind-Date="incident.ResolvedAt" />
-                        </MudPaper>
-                    </MudItem>
-                    }
-                    <MudItem xs="6">
-                        <MudPaper Class="pa-4 dialog-background-container">
-                            <MudDatePicker Label="Incident Date"
-                            Required="true" ShowWeekNumbers="true" @bind-Date="incident.ReportedAt" />
-                        </MudPaper>
-                    </MudItem>
-                   
-                    <MudItem xs="6">
-                        <MudPaper Class="pa-4 dialog-background-container">
-                            <MudSelect @bind-Value="incident.Status" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
-                            T="string" Label="Select Status">
-                                <MudSelectItem Value="@("In Progress")" />
-                                <MudSelectItem Value="@("Reported")" />
-                                <MudSelectItem Value="@("Verified")" />
-                                <MudSelectItem Value="@("Resolved")" />
-                            </MudSelect>
-                        </MudPaper>
-                    </MudItem>  
-                    
-                    <MudItem xs="6">
-                        <MudPaper Class="pa-4 dialog-background-container">
-                            <MudSelect @bind-Value="incident.Severity" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
-                            T="string" Label="Select Status">
-                                <MudSelectItem Value="@("Low")" />
-                                <MudSelectItem Value="@("Medium")" />
-                                <MudSelectItem Value="@("High")" />
-                                <MudSelectItem Value="@("Critical")" />
-                            </MudSelect>
-                        </MudPaper>
-                    </MudItem>
-                    <MudItem xs="12">
-                        <MudPaper Class="pa-4 dialog-background-container">
-                            <MudTextField @bind-Value="incident.Location" Label="Location"
-                                          Required="true" For="@(() => incident.Location)" />
-                     
-                                      </MudPaper>
-                    </MudItem>
+                        <MudStack Row="true" AlignItems="AlignItems.Center">
 
 
-                </MudGrid>
-
-                <MudPaper Class="pa-4 dialog-background-container">
-                    <MudFileUpload T="IReadOnlyList<IBrowserFile>"
-                    Accept=".png, .jpg"
-                    FilesChanged="UploadFiles2"
-                    MaximumFileCount="100">
-                        <ActivatorContent>
-                            <MudButton Variant="Variant.Filled"
-                            Color="Color.Primary"
-                            StartIcon="@Icons.Material.Filled.CloudUpload">
-                                Only image files
-                            </MudButton>
-                        </ActivatorContent>
-                    </MudFileUpload>
+                            <MudToggleIconButton @bind-Toggled="ShowPdf"
+                     Icon="@Icons.Material.Filled.Visibility"
+                     Color="@Color.Success"
+                                                 ToggledIcon="@Icons.Material.Filled.VisibilityOff"
+                     ToggledColor="@Color.Error"
+                                                 title="@(ShowPdf ? "Show" : "Hide")" />
 
 
-
-                    @if (files != null && imageUrls.Count > 0)
-                    {
-                        <MudList T="string" Class="d-flex flex-wrap">
-                            @foreach (var imageUrl in imageUrls)
+                            <!-- Left-aligned button -->
+                            @* <MudButton Variant="Variant.Filled" Color="Color.Warning"
+                                       StartIcon="@Icons.Material.Filled.FileDownload"
+                                       OnClick="GeneratePdf">
+                                Download PDF
+                            </MudButton> *@
+                            <MudSpacer />
+                            @if ((incident.Status.ToString() == "In Progress" || incident.Status.ToString() == "Reported") && IncidentId != 0)
                             {
-                                <MudPaper Class="relative ma-2" Style="display:inline-block; position:relative;">
-                                    @if (imageUrl.StartsWith("\\photos") ){
-                                        <MudIconButton Icon="@Icons.Material.Filled.Close"
-                                        Color="Color.Primary"
-                                        Size="Size.Small"
-                                        Class="absolute -top-2 -right-2 z-10 bg-dark rounded-full shadow-md"
-                                        OnClick="@(() => ConfirmDelete(imageUrl))" />
-                                    }
-                                    <MudImage Src="@imageUrl"
-                                    Height="150"
-                                    Elevation="25"
-                                    Class="rounded-lg" />
-                                </MudPaper>
+                                <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
+                                           StartIcon="@Icons.Material.Filled.Check"
+                                           OnClick="VerifyIncident">
+                                    Verify
+                                </MudButton>
                             }
-                        </MudList>
-                    }
+                            @if ((incident.Status.ToString() == "In Progress" || incident.Status.ToString() == "Reported" || incident.Status.ToString() == "Verified") && IncidentId != 0)
+                            {
+                                <MudButton Variant="Variant.Filled" Color="Color.Tertiary"
+                                           StartIcon="@Icons.Material.Filled.Check"
+                                           OnClick="ResolvedIncedent">
+                                    Resolve Incident
+                                </MudButton>
+                            }
+                        </MudStack>
 
+                        <!-- Incident Fields -->
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudTextField @bind-Value="incident.Title" Label="Title" Required="true" For="@(() => incident.Title)" />
+                        </MudPaper>
 
-                </MudPaper>
-            </MudStack>
-        </MudForm>
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudTextField @bind-Value="incident.Description" Label="Description" Required="true" For="@(() => incident.Description)" />
+                        </MudPaper>
+
+                        <MudGrid>
+                            <MudItem xs="6">
+                                <MudPaper Class="pa-4 dialog-background-container">
+                                    <MudDatePicker Label="Incident Date" Required="true" ShowWeekNumbers="true" @bind-Date="incident.ReportedAt" />
+                                </MudPaper>
+                            </MudItem>
+
+                            <MudItem xs="6">
+                                <MudPaper Class="pa-4 dialog-background-container">
+                                    <MudDatePicker Label="Resolved At" ShowWeekNumbers="true" @bind-Date="incident.ResolvedAt" />
+                                </MudPaper>
+                            </MudItem>
+
+                            <MudItem xs="6">
+                                <MudPaper Class="pa-4 dialog-background-container">
+                                    <MudSelect @bind-Value="incident.Status" T="string" Label="Status"
+                                               AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary">
+                                        <MudSelectItem Value="@("In Progress")" />
+                                        <MudSelectItem Value="@("Reported")" />
+                                        <MudSelectItem Value="@("Verified")" />
+                                        <MudSelectItem Value="@("Resolved")" />
+                                    </MudSelect>
+                                </MudPaper>
+                            </MudItem>
+
+                            <MudItem xs="6">
+                                <MudPaper Class="pa-4 dialog-background-container">
+                                    <MudSelect @bind-Value="incident.Severity" T="string" Label="Severity"
+                                               AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary">
+                                        <MudSelectItem Value="@("Low")" />
+                                        <MudSelectItem Value="@("Medium")" />
+                                        <MudSelectItem Value="@("High")" />
+                                        <MudSelectItem Value="@("Critical")" />
+                                    </MudSelect>
+                                </MudPaper>
+                            </MudItem>
+
+                            <MudItem xs="12">
+                                <MudPaper Class="pa-4 dialog-background-container">
+                                    <MudTextField @bind-Value="incident.Location" Label="Location" Required="true" />
+                                </MudPaper>
+                            </MudItem>
+                        </MudGrid>
+
+                        <!-- File upload -->
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudFileUpload T="IReadOnlyList<IBrowserFile>" Accept=".png,.jpg" FilesChanged="UploadFiles2" MaximumFileCount="100">
+                                <ActivatorContent>
+                                    <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.CloudUpload">
+                                        Upload Images
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+
+                            @if (files != null && imageUrls.Count > 0)
+                            {
+                                <MudList T="string" Class="d-flex flex-wrap">
+                                    @foreach (var imageUrl in imageUrls)
+                                    {
+                                        <MudPaper Class="relative ma-2" Style="display:inline-block; position:relative;">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Close" Color="Color.Primary" Size="Size.Small"
+                                                           Class="absolute -top-2 -right-2 z-10 bg-dark rounded-full shadow-md"
+                                                           OnClick="@(() => ConfirmDelete(imageUrl))" />
+                                            <MudImage Src="@imageUrl" Height="150" Elevation="25" Class="rounded-lg" />
+                                        </MudPaper>
+                                    }
+                                </MudList>
+                            }
+                        </MudPaper>
+
+                    </MudStack>
+                </MudForm>
+            </MudItem>
+        </MudStack>
     </DialogContent>
 
     <DialogActions>
-        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">
-            Cancel
-        </MudButton>
-        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">
-            Save
-        </MudButton>
+        <MudButton Variant="Variant.Text" Color="Color.Default" OnClick="Cancel">Cancel</MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Submit">Save</MudButton>
     </DialogActions>
 </MudDialog>
 
@@ -205,9 +206,32 @@ ActionsClass="dialog-background-surface">
 
 @code {
 
+    
+
+    public bool ShowPdf { get; set; } = false;
+
+    private PdfViewer _pdfViewer;
+
+    private BlazorPdfColors PdfColors { get; set; } = new()
+    {
+        Background = "#2e2d2d",
+        Toolbar = "#423e3e",
+        Icon = "#f1f4f8",
+    };
+
+
+    string PdfUrl = string.Empty;
+
+    private async Task GeneratePdf()
+    {
+
+        if (IncidentId != 0)
+            NavManager.NavigateTo(NavManager.BaseUri + $"api/Incident/{IncidentId}/pdf", forceLoad: true);
 
 
 
+    }
+    string url;
     private List<string> savedPaths = new List<string>();
     IList<IBrowserFile> files = new List<IBrowserFile>();
     private List<string> imageUrls = new List<string>();
@@ -391,6 +415,12 @@ ActionsClass="dialog-background-surface">
 
     protected override async Task OnInitializedAsync()
     {
+        PdfUrl = NavManager.BaseUri + $"api/Incident/{IncidentId}/ViewPdf";
+
+      //  await _pdfViewer.LoadPdfAsync(PdfUrl);
+        
+
+
         var token = await LocalStorage.GetItemAsync<string>("authToken");
         EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
         company = JwtHelper.DecodeTokenToCompany(token);

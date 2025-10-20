@@ -4,7 +4,7 @@
 @using FormCraft.ForMudBlazor
 @using MudBlazor
 @using MudBlazor.Extensions.Options
-
+@using Gotho.BlazorPdf
 
 <PageTitle>SecureOps</PageTitle>
 @* Required *@
@@ -21,6 +21,8 @@
                    Position="DialogPosition.Center"
                    CloseOnEscapeKey="true"
                    BackgroundClass="my-custom-class" />
+<CascadingValue Value="DarkMode">
+
 <MudLayout>
 <div class="page">
   
@@ -54,6 +56,8 @@
 </div>
  
 </MudLayout>
+</CascadingValue>
+
 @code {
 
 

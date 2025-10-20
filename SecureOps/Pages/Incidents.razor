@@ -16,7 +16,6 @@
 @using MudBlazor.Extensions;
 @using MudBlazor.Extensions.Options;
 @using SecureOps.Pages.Dialogs
-<h3>Employee Incidents</h3>
 
 
 
@@ -84,6 +83,8 @@
 
 
             <MudDataGrid ReadOnly="false"
+                         RowStyleFunc="RowStyleFunc"
+                         
                          @ref="grid"
                          T="Incident"
                          MultiSelection="true"
@@ -105,10 +106,12 @@
                 </ToolBarContent>
                 <Columns>
                     <SelectColumn T="Incident" />
-                    <PropertyColumn Property="x => x.Title" Title="Title" />
-                    <PropertyColumn Property="x => x.Status" />
-                    <PropertyColumn Property="x => x.Id" />
-                    <PropertyColumn Property="x => x.ReportedAt.ToString()" SortBy="@_sortBy" />
+                    <PropertyColumn Property="x => x.Title" Title="Title" SortBy="@SortByTitle" />
+
+                    <PropertyColumn Property="x => x.ReportedAt.ToString()" SortBy="@SortByReportedAt" />
+                    <PropertyColumn Property="x => x.Status.ToString()" SortBy="@SortByStatus" />
+                    <PropertyColumn Property="x => x.Severity.ToString()" SortBy="@SortBySeverity" />
+        
                     @* <PropertyColumn Property="x => x.UpdatedAt" />  *@
                     @* <PropertyColumn Property="x => x.UploadedBy != null ? x.UploadedBy.FullName : string.Empty" Title="Full Name" /> *@
                     @* <PropertyColumn Property="x => x.IsActive" Title="IsActive" /> *@
@@ -120,6 +123,12 @@
                     <TemplateColumn Title="Actions" CellClass="d-flex justify-center">
                         <CellTemplate>
                             <MudStack Row="true" Spacing="3" T="string" Class="d-flex flex-wrap" >
+                            <MudButton Color="Color.Primary"
+                                       Variant="Variant.Filled"
+                                       Size="Size.Small"
+                                           OnClick="@(async () => await GeneratePdf(context.Item.Id))">
+                                    Generate PDF
+                            </MudButton>
                             <MudButton Color="Color.Primary"
                                        Variant="Variant.Filled"
                                        Size="Size.Small"
@@ -170,6 +179,71 @@
 
 
 @code {
+    [CascadingParameter] public bool DarkMode { get; set; }  // 👈 comes from layout
+    private async Task GeneratePdf(int IncidentId)
+    {
+
+        if (IncidentId != 0)
+            NavManager.NavigateTo(NavManager.BaseUri + $"api/Incident/{IncidentId}/pdf", forceLoad: true);
+
+
+
+    }
+
+    private string RowStyleFunc(Incident x, int index)
+    {
+        if (DarkMode)
+        {
+
+            string style = "";
+
+            if (x.Status.Equals("Reported"))
+                style += "background-color: #3B0F0F;";
+
+            else if (x.Status.Equals("Resolved"))
+                style += "background-color:#1B3D2F";
+
+            else if (x.Status.Equals("Verified"))
+                style += "background-color:#2E1E4D";
+
+            else if (x.Status.Equals("In Progress"))
+                style += "background-color:#4A2C0A";
+
+            else
+                style += "";
+
+
+
+            return style;
+        }
+        else
+        {   
+            
+            string style = "";
+
+            if (x.Status.Equals("Reported"))
+                style += "background-color: #FFB3B3;";
+
+            else if (x.Status.Equals("Resolved"))
+                style += "background-color:#B2DFDB";
+
+            else if (x.Status.Equals("Verified"))
+                style += "background-color:#D1C4E9";
+
+            else if (x.Status.Equals("In Progress"))
+                style += "background-color:#FFD699";
+
+            else
+                style += "";
+
+
+
+            return style;
+
+        }
+
+}
+
 
     private async Task OnActionButtonClicked(int documentId)
     {
@@ -205,14 +279,15 @@
     private string _searchString;
     private bool _sortNameByLength;
     private List<string> _events = new();
-    // custom sort by name length
-    private Func<Incident, object> _sortBy => x =>
-    {
-        if (_sortNameByLength)
-            return x.Title.Length;
-        else
-            return x.Employee.FullName;
-    };
+
+
+    private Func<Incident, object> SortByTitle => x =>
+        _sortNameByLength ? x.Title.Length : x.Title;
+
+    private Func<Incident, object> SortByEmployee => x => x.Employee.FullName;
+    private Func<Incident, object> SortByReportedAt => x => x.ReportedAt;
+    private Func<Incident, object> SortByStatus => x => x.Status;
+    private Func<Incident, object> SortBySeverity => x => x.Severity;
     // quick filter - filter globally across multiple columns with the same input
     private Func<Incident, bool> _quickFilter => x =>
     {
@@ -405,9 +480,10 @@
 
 
 
+
     protected override async Task OnInitializedAsync()
     {
-
+       
         var token = await LocalStorage.GetItemAsync<string>("authToken");
         employee = JwtHelper.DecodeTokenToEmployee(token);
 

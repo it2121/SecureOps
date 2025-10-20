@@ -13,6 +13,7 @@
     <PackageReference Include="CodeBeam.MudBlazor.Extensions" Version="8.2.4" />
     <PackageReference Include="FormCraft" Version="2.5.0" />
     <PackageReference Include="FormCraft.ForMudBlazor" Version="2.5.0" />
+    <PackageReference Include="Gotho.BlazorPdf" Version="1.1.2" />
     <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="9.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.0.9" />
     <PackageReference Include="Microsoft.AspNetCore.Identity.UI" Version="9.0.9" />
@@ -33,6 +34,7 @@
     <PackageReference Include="MudBlazor.Translations" Version="2.6.0" />
     <PackageReference Include="QuestPDF" Version="2025.7.2" />
     <PackageReference Include="Spectre.Console" Version="0.51.2-preview.0.3" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.10" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="8.14.0" />
   </ItemGroup>
 

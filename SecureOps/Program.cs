@@ -85,6 +85,7 @@ builder.Services.AddDefaultIdentity<ApplicationUser>(options =>
 })
 .AddRoles<IdentityRole>()   // enable roles
 .AddEntityFrameworkStores<AppDbContext>();
+builder.Services.AddBlazorPdfViewer();
 
 
 builder.Services.AddMudServicesWithExtensions();
