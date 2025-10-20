@@ -101,14 +101,65 @@ namespace SecureOps.Controllers
 
 
 
+        [HttpPost("VerifyIncident")]
+        public async Task<IActionResult> VerifyIncident([FromQuery] int incidentId, [FromQuery] int verifiedById)
+        {
+            var incident = await _db.Incidents.AsNoTracking().FirstOrDefaultAsync(i => i.Id == incidentId);
 
+            if (incident == null)
+                return NotFound(new { message = "Incident not found." });
+
+            incident.Status = "Verified";
+            incident.VerifiedById = verifiedById;
+            incident.UpdatedAt = DateTime.UtcNow;
+
+            // Force EF to update even if entity was previously tracked
+            _db.Entry(incident).State = EntityState.Modified;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Incident verified successfully.",
+                incident.Id,
+                incident.Status,
+                incident.ResolvedAt,
+                incident.VerifiedById
+            });
+        }
+
+        [HttpPost("ResolveIncident")]
+        public async Task<IActionResult> ResolveIncident([FromQuery] int incidentId, [FromQuery] int verifiedById)
+        {
+            var incident = await _db.Incidents.AsNoTracking().FirstOrDefaultAsync(i => i.Id == incidentId);
+
+            if (incident == null)
+                return NotFound(new { message = "Incident not found." });
+
+            incident.Status = "Resolved";
+            incident.ResolvedAt = DateTime.UtcNow;
+            incident.UpdatedAt = DateTime.UtcNow;
+
+            _db.Entry(incident).State = EntityState.Modified;
+
+            await _db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Incident resolved successfully.",
+                incident.Id,
+                incident.Status,
+                incident.ResolvedAt,
+                incident.VerifiedById
+            });
+        }
 
 
         [HttpGet("GetIncident")]
         public async Task<Incident> GetIncident([FromQuery] int IncidentId)
         {
             Incident incident = await _db.Incidents
-      
+
         .FirstOrDefaultAsync(e => e.Id == IncidentId);
 
             if (incident == null) return null;
@@ -221,18 +272,23 @@ namespace SecureOps.Controllers
                 if (existingIncident is not null)
                 {
 
-                    string folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot\\photos\\" + dto.Id);
+                    string folderPath = Path.Combine(Directory.GetCurrentDirectory(),
+                        "wwwroot\\photos\\" + dto.Id);
+
                     if (!Directory.Exists(folderPath))
                         Directory.CreateDirectory(folderPath);
                     dto.PhotoPath = folderPath;
                     // Update existing
                     existingIncident.Title = dto.Title;
                     existingIncident.Description = dto.Description;
+                    existingIncident.Location = dto.Location;
                     existingIncident.PhotoPath = dto.PhotoPath;
                     existingIncident.Status = dto.Status;
+                    existingIncident.Severity = dto.Severity;
                     existingIncident.ReportedAt = (DateTime)dto.ReportedAt;
+                    existingIncident.ResolvedAt = (DateTime)dto.ResolvedAt;
                     existingIncident.EmployeeId = dto.EmpId;
-
+                    existingIncident.UpdatedAt = DateTime.UtcNow;
                     _db.Incidents.Update(existingIncident);
                     await _db.SaveChangesAsync();
 
@@ -284,11 +340,14 @@ namespace SecureOps.Controllers
                    var newIncident = new Incident
                     {
                         Title = dto.Title,
+                       Severity = dto.Severity,
                         Description = dto.Description,
+                       Location = dto.Location,
                         PhotoPath = dto.PhotoPath,
                         Status = dto.Status,
                         ReportedAt = (DateTime)dto.ReportedAt,
-                        EmployeeId = dto.EmpId
+                        EmployeeId = dto.EmpId,
+                        CompanyId = dto.CompanyId
                     };
 
                     await _db.Incidents.AddAsync(newIncident);

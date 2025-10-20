@@ -22,6 +22,37 @@ ActionsClass="dialog-background-surface">
     <DialogContent>
         <MudForm @ref="form" Class="mt-4">
             <MudStack Spacing="3">
+
+                @if ((incident.Status.ToString().Equals("In Progress")
+                || incident.Status.ToString().Equals("Reported")
+                ) && IncidentId != 0){
+                
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Warning"
+                               StartIcon="@Icons.Material.Filled.Check"
+                                   OnClick="VerifyIncident">
+                            Verifie
+                    </MudButton>
+                </MudStack>
+    
+                }   @if ((incident.Status.ToString().Equals("In Progress")
+                || incident.Status.ToString().Equals("Reported")
+                || incident.Status.ToString().Equals("Verified")
+                )&& IncidentId!=0
+                )
+                {
+                <MudStack Row="true" Justify="Justify.FlexEnd">
+                    <MudButton Variant="Variant.Filled"
+                               Color="Color.Warning"
+                               StartIcon="@Icons.Material.Filled.Check"
+                                OnClick="ResolvedIncedent"
+                    >
+                        Resolved The Incident
+                    </MudButton>
+                </MudStack>
+    
+                }
                 <MudPaper Class="pa-4  dialog-background-container">
                     <MudTextField @bind-Value="incident.Title" Label="Title"
                     Required="true" For="@(() => incident.Title)" />
@@ -34,23 +65,55 @@ ActionsClass="dialog-background-surface">
                 </MudPaper>
 
                 <MudGrid>
+                    @if (incident.ResolvedAt.ToString().Length > 0)
+                    {
+
+                    <MudItem xs="6">
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudDatePicker Label="Resolved at"
+                            Required="true" ShowWeekNumbers="true" @bind-Date="incident.ResolvedAt" />
+                        </MudPaper>
+                    </MudItem>
+                    }
                     <MudItem xs="6">
                         <MudPaper Class="pa-4 dialog-background-container">
                             <MudDatePicker Label="Incident Date"
                             Required="true" ShowWeekNumbers="true" @bind-Date="incident.ReportedAt" />
                         </MudPaper>
                     </MudItem>
-
+                   
                     <MudItem xs="6">
                         <MudPaper Class="pa-4 dialog-background-container">
                             <MudSelect @bind-Value="incident.Status" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
                             T="string" Label="Select Status">
                                 <MudSelectItem Value="@("In Progress")" />
                                 <MudSelectItem Value="@("Reported")" />
+                                <MudSelectItem Value="@("Verified")" />
                                 <MudSelectItem Value="@("Resolved")" />
                             </MudSelect>
                         </MudPaper>
+                    </MudItem>  
+                    
+                    <MudItem xs="6">
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudSelect @bind-Value="incident.Severity" AdornmentIcon="@Icons.Material.Filled.ArrowDownward" AdornmentColor="Color.Primary"
+                            T="string" Label="Select Status">
+                                <MudSelectItem Value="@("Low")" />
+                                <MudSelectItem Value="@("Medium")" />
+                                <MudSelectItem Value="@("High")" />
+                                <MudSelectItem Value="@("Critical")" />
+                            </MudSelect>
+                        </MudPaper>
                     </MudItem>
+                    <MudItem xs="12">
+                        <MudPaper Class="pa-4 dialog-background-container">
+                            <MudTextField @bind-Value="incident.Location" Label="Location"
+                                          Required="true" For="@(() => incident.Location)" />
+                     
+                                      </MudPaper>
+                    </MudItem>
+
+
                 </MudGrid>
 
                 <MudPaper Class="pa-4 dialog-background-container">
@@ -254,9 +317,71 @@ ActionsClass="dialog-background-surface">
     [Parameter] public int EmployeeId { get; set; }
 
     private Employee employee;
+    private CompanyDto company;
     private MudForm form;
     private Incident incident = new Incident();
 
+    private async void VerifyIncident()
+    {
+
+        try
+        {
+            var response = await Http.PostAsync(
+                NavManager.BaseUri + $"api/Incident/VerifyIncident?incidentId={IncidentId}&verifiedById={EmployeeId}",
+                null
+            );       //     var response = await Http.PutAsync(url, null); // no body needed
+
+            if (response.IsSuccessStatusCode)
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
+
+     
+
+
+       // await SaveIncident();
+    }
+       private async void ResolvedIncedent()
+    {
+
+        try
+        {
+            var response = await Http.PostAsync(
+                NavManager.BaseUri + $"api/Incident/ResolveIncident?incidentId={IncidentId}&verifiedById={EmployeeId}",
+                null
+            );       //     var response = await Http.PutAsync(url, null); // no body needed
+
+            if (response.IsSuccessStatusCode)
+            {
+                MudDialog.Close(DialogResult.Ok(true));
+            }
+            else
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                Console.WriteLine($"Error: {error}");
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Exception: {ex.Message}");
+        }
+
+     
+
+
+      //  await SaveIncident();
+    }
+    
     private async void Submit()
     {
         await SaveIncident();
@@ -268,6 +393,7 @@ ActionsClass="dialog-background-surface">
     {
         var token = await LocalStorage.GetItemAsync<string>("authToken");
         EmployeeId = JwtHelper.DecodeTokenToEmployee(token).Id;
+        company = JwtHelper.DecodeTokenToCompany(token);
 
         if (IncidentId != 0)
         {
@@ -314,11 +440,16 @@ ActionsClass="dialog-background-surface">
             {
                 Description = incident.Description,
                 ReportedAt = incident.ReportedAt,
+                ResolvedAt = incident.ResolvedAt,
+                Location = incident.Location,
+                Severity = incident.Severity,
+                CreatedById = EmployeeId,
                 Title = incident.Title,
                 Status = incident.Status,
                 EmpId = incident.EmployeeId,
                 PhotoPath = incident.PhotoPath,
-                Id = incident.Id
+                Id = incident.Id,
+                CompanyId = company.Id
             };
 
         bool okay = true;
@@ -332,15 +463,15 @@ ActionsClass="dialog-background-surface">
 
                 if (first)
                 {
-                    
+
                     first = false;
                 }
                 else
                 {
                     dto.Id =  await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetCurrentIncidentID");
                     incident.Id = await Http.GetFromJsonAsync<int>(NavManager.BaseUri + $"api/incident/GetCurrentIncidentID");
+                   
 
-                    
                     
                 }
 
